@@ -1,0 +1,19 @@
+app = 'aljeeza-sooq'
+primary_region = 'fra'
+
+[build]
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  auto_stop_machines = 'stop'
+  auto_start_machines = true
+  min_machines_running = 0
+
+[[mounts]]
+  source = 'aljeeza_data'
+  destination = '/app/data'
+
+[[mounts]]
+  source = 'aljeeza_uploads'
+  destination = '/app/public/uploads'
