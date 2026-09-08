@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head><%- include('../partials/head', {pageTitle: 'لوحة الإدارة'}) %></head>
+<body>
+  <%- include('../partials/header') %>
+  <div class="container dash-layout">
+    <%- include('../partials/admin-nav') %>
+    <div>
+      <h1 style="font-size:22px">نظرة عامة</h1>
+      <div class="stat-grid">
+        <div class="stat-card"><div class="num"><%= stats.users %></div><div class="lbl">إجمالي المستخدمين</div></div>
+        <div class="stat-card"><div class="num"><%= stats.vendors %></div><div class="lbl">إجمالي العارضين</div></div>
+        <div class="stat-card"><div class="num"><%= stats.stores %></div><div class="lbl">إجمالي المتاجر</div></div>
+        <div class="stat-card"><div class="num"><%= stats.products %></div><div class="lbl">إجمالي المنتجات</div></div>
+        <div class="stat-card"><div class="num"><%= stats.newProducts %></div><div class="lbl">منتجات جديدة (٧ أيام)</div></div>
+        <div class="stat-card"><div class="num"><%= stats.pendingStores %></div><div class="lbl">متاجر بانتظار الموافقة</div></div>
+        <div class="stat-card"><div class="num"><%= stats.openReports %></div><div class="lbl">بلاغات مفتوحة</div></div>
+        <div class="stat-card"><div class="num"><%= stats.activeAds %></div><div class="lbl">إعلانات نشطة</div></div>
+      </div>
+      <div class="panel">
+        <h3>النشاط اليومي (منتجات جديدة)</h3>
+        <table>
+          <tr><th>اليوم</th><th>عدد المنتجات</th></tr>
+          <% dailyActivity.forEach(d => { %><tr><td><%= d.day %></td><td><%= d.count %></td></tr><% }) %>
+        </table>
+        <% if (!dailyActivity.length) { %><p style="color:#8a7d67">لا يوجد نشاط بعد.</p><% } %>
+      </div>
+    </div>
+  </div>
+  <%- include('../partials/footer') %>
+</body>
+</html>

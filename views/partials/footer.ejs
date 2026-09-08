@@ -1,0 +1,28 @@
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <h4>AlJeeza Sooq</h4>
+        <a href="/">سوق رقمي محلي يربط أصحاب المحلات والمعارض والمصانع بالمشترين، يبدأ من الجيزة.</a>
+      </div>
+      <div>
+        <h4>روابط سريعة</h4>
+        <a href="/search">تصفح المنتجات</a>
+        <a href="/register">سجل كعارض</a>
+        <a href="/login">تسجيل الدخول</a>
+      </div>
+      <div>
+        <h4>التصنيفات</h4>
+        <% (categories || []).slice(0,5).forEach(c => { %>
+          <a href="/search?category=<%= c.slug %>"><%= c.name %></a>
+        <% }) %>
+      </div>
+      <div>
+        <h4>تواصل معنا</h4>
+        <a href="mailto:info@aljeeza-sooq.com">info@aljeeza-sooq.com</a>
+        <a href="tel:19999">19999</a>
+      </div>
+    </div>
+    <div class="footer-bottom">© <%= new Date().getFullYear() %> AlJeeza Sooq | سوق الجيزة. جميع الحقوق محفوظة.</div>
+  </div>
+</footer>

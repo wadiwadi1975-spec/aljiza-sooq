@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head><%- include('../partials/head', {pageTitle: 'لوحة العارض'}) %></head>
+<body>
+  <%- include('../partials/header') %>
+  <div class="container dash-layout">
+    <%- include('../partials/vendor-nav') %>
+    <div>
+      <h1 style="font-size:22px">لوحة تحكم العارض</h1>
+
+      <% if (vendor.status !== 'approved') { %>
+        <div class="panel" style="border-color:#e0c98a;background:#fbf3de">
+          حساب العارض الخاص بك حاليًا بحالة: <span class="status-pill status-<%= vendor.status %>"><%= vendor.status %></span> — بانتظار موافقة الإدارة.
+        </div>
+      <% } %>
+
+      <% if (!store) { %>
+        <div class="panel">
+          <h3>لم تقم بإنشاء متجرك بعد</h3>
+          <p>أنشئ متجرك الآن لتتمكن من إضافة المنتجات واستقبال الاستفسارات.</p>
+          <a href="/vendor/store" class="btn btn-gold">إنشاء المتجر</a>
+        </div>
+      <% } else { %>
+      <div class="stat-grid">
+        <div class="stat-card"><div class="num"><%= stats.products %></div><div class="lbl">المنتجات</div></div>
+        <div class="stat-card"><div class="num"><%= stats.views %></div><div class="lbl">المشاهدات</div></div>
+        <div class="stat-card"><div class="num"><%= stats.inquiries %></div><div class="lbl">الاستفسارات</div></div>
+        <div class="stat-card"><div class="num"><%= stats.messages %></div><div class="lbl">الرسائل</div></div>
+        <div class="stat-card"><div class="num"><%= stats.followers %></div><div class="lbl">المتابعون</div></div>
+        <div class="stat-card"><div class="num"><%= stats.rating || '—' %></div><div class="lbl">التقييم</div></div>
+        <div class="stat-card"><div class="num"><%= stats.featured %></div><div class="lbl">منتجات مميزة</div></div>
+      </div>
+
+      <div class="panel">
+        <h3>أحدث الاستفسارات</h3>
+        <% if (!recentInquiries.length) { %><p style="color:#8a7d67">لا توجد استفسارات بعد.</p><% } %>
+        <table>
+          <% recentInquiries.forEach(i => { %>
+            <tr><td><%= i.userName %></td><td><%= i.productTitle %></td><td><%= i.message %></td></tr>
+          <% }) %>
+        </table>
+      </div>
+      <% } %>
+    </div>
+  </div>
+  <%- include('../partials/footer') %>
+</body>
+</html>

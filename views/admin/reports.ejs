@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head><%- include('../partials/head', {pageTitle: 'البلاغات'}) %></head>
+<body>
+  <%- include('../partials/header') %>
+  <div class="container dash-layout">
+    <%- include('../partials/admin-nav') %>
+    <div>
+      <h1 style="font-size:22px">إدارة البلاغات</h1>
+      <div class="panel">
+        <table>
+          <tr><th>المُبلّغ</th><th>النوع</th><th>المعرّف</th><th>السبب</th><th>الحالة</th></tr>
+          <% reports.forEach(r => { %>
+            <tr>
+              <td><%= r.reporterName %></td><td><%= r.targetType %></td><td><%= r.targetId %></td><td><%= r.reason %></td>
+              <td>
+                <form method="POST" action="/admin/reports/<%= r.id %>/status" style="display:flex;gap:6px">
+                  <select name="status" onchange="this.form.submit()">
+                    <option value="open" <%= r.status==='open'?'selected':'' %>>مفتوح</option>
+                    <option value="resolved" <%= r.status==='resolved'?'selected':'' %>>تم الحل</option>
+                    <option value="dismissed" <%= r.status==='dismissed'?'selected':'' %>>مرفوض</option>
+                  </select>
+                </form>
+              </td>
+            </tr>
+          <% }) %>
+        </table>
+        <% if (!reports.length) { %><p class="empty">لا توجد بلاغات.</p><% } %>
+      </div>
+    </div>
+  </div>
+  <%- include('../partials/footer') %>
+</body>
+</html>

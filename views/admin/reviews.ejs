@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head><%- include('../partials/head', {pageTitle: 'التقييمات'}) %></head>
+<body>
+  <%- include('../partials/header') %>
+  <div class="container dash-layout">
+    <%- include('../partials/admin-nav') %>
+    <div>
+      <h1 style="font-size:22px">إدارة التقييمات</h1>
+      <div class="panel">
+        <table>
+          <tr><th>المتجر</th><th>المستخدم</th><th>التقييم</th><th>التعليق</th><th>الحالة</th></tr>
+          <% reviews.forEach(r => { %>
+            <tr>
+              <td><%= r.storeName %></td><td><%= r.userName %></td><td>★ <%= r.rating %></td><td><%= r.comment %></td>
+              <td>
+                <form method="POST" action="/admin/reviews/<%= r.id %>/status" style="display:flex;gap:6px">
+                  <select name="status" onchange="this.form.submit()">
+                    <option value="visible" <%= r.status==='visible'?'selected':'' %>>ظاهر</option>
+                    <option value="reported" <%= r.status==='reported'?'selected':'' %>>مُبلّغ عنه</option>
+                    <option value="removed" <%= r.status==='removed'?'selected':'' %>>محذوف</option>
+                  </select>
+                </form>
+              </td>
+            </tr>
+          <% }) %>
+        </table>
+        <% if (!reviews.length) { %><p class="empty">لا توجد تقييمات.</p><% } %>
+      </div>
+    </div>
+  </div>
+  <%- include('../partials/footer') %>
+</body>
+</html>

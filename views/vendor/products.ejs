@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head><%- include('../partials/head', {pageTitle: 'منتجاتي'}) %></head>
+<body>
+  <%- include('../partials/header') %>
+  <div class="container dash-layout">
+    <%- include('../partials/vendor-nav') %>
+    <div>
+      <div class="section-head">
+        <h1 style="font-size:22px">منتجاتي</h1>
+        <a href="/vendor/products/new" class="btn btn-gold">+ إضافة منتج</a>
+      </div>
+      <div class="panel">
+        <table>
+          <tr><th>المنتج</th><th>التصنيف</th><th>السعر</th><th>الحالة</th><th>المشاهدات</th><th></th></tr>
+          <% products.forEach(p => { %>
+            <tr>
+              <td><%= p.title %></td>
+              <td><%= p.categoryName || '—' %></td>
+              <td><%= p.price ? p.price.toLocaleString('ar-EG') : '—' %></td>
+              <td><span class="status-pill status-<%= p.status %>"><%= p.status %></span> <% if(p.featured){ %>⭐<% } %></td>
+              <td><%= p.views %></td>
+              <td style="display:flex;gap:6px">
+                <a class="btn btn-outline btn-sm" href="/vendor/products/<%= p.id %>/edit">تعديل</a>
+                <form method="POST" action="/vendor/products/<%= p.id %>/delete" onsubmit="return confirm('هل أنت متأكد من الحذف؟')">
+                  <button class="btn btn-danger btn-sm">حذف</button>
+                </form>
+              </td>
+            </tr>
+          <% }) %>
+        </table>
+        <% if (!products.length) { %><p class="empty">لا توجد منتجات بعد.</p><% } %>
+      </div>
+    </div>
+  </div>
+  <%- include('../partials/footer') %>
+</body>
+</html>

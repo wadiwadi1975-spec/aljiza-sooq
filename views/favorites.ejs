@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head><%- include('partials/head', {pageTitle: 'المفضلة'}) %></head>
+<body>
+  <%- include('partials/header') %>
+  <div class="container" style="padding:28px 0">
+    <h1 style="font-size:22px">منتجاتي المحفوظة</h1>
+    <% if (!favorites.length) { %>
+      <div class="empty"><h3>لا توجد منتجات محفوظة</h3><a href="/search" class="btn btn-gold">تصفح المنتجات</a></div>
+    <% } else { %>
+    <div class="grid">
+      <% favorites.forEach(p => { %>
+        <a class="card" href="/product/<%= p.id %>">
+          <div class="card-img"><img src="<%= p.image || 'https://placehold.co/400x300' %>"></div>
+          <div class="card-body">
+            <p class="card-title"><%= p.title %></p>
+            <p class="card-price"><%= p.price ? p.price.toLocaleString('ar-EG') + ' ج.م' : '' %></p>
+            <p class="card-meta"><%= p.storeName %></p>
+          </div>
+        </a>
+      <% }) %>
+    </div>
+    <% } %>
+  </div>
+  <%- include('partials/footer') %>
+</body>
+</html>

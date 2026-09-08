@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head><%- include('partials/head', {pageTitle: store.name}) %></head>
+<body>
+  <%- include('partials/header') %>
+
+  <div style="height:220px;background:var(--sand-100);overflow:hidden">
+    <img src="<%= store.coverImage || 'https://placehold.co/1200x300?text=AlJeeza+Sooq' %>" style="width:100%;height:100%;object-fit:cover">
+  </div>
+  <div class="container" style="margin-top:-40px">
+    <div class="store-card" style="box-shadow:0 10px 30px rgba(0,0,0,.12)">
+      <img class="store-logo" src="<%= store.logoImage || 'https://placehold.co/100?text=AJS' %>">
+      <div style="flex:1">
+        <div class="store-name" style="font-size:19px"><%= store.name %></div>
+        <div class="stars"><%= avgRating ? '★ ' + avgRating : 'لا يوجد تقييم بعد' %></div>
+        <div class="card-meta"><%= store.city || '' %> <% if(store.area){ %>، <%= store.area %><% } %> <% if(store.workHours){ %> · <%= store.workHours %><% } %></div>
+      </div>
+      <% if (currentUser) { %>
+        <form method="POST" action="/follow/<%= store.id %>">
+          <button class="btn btn-outline btn-sm"><%= isFollowing ? 'إلغاء المتابعة' : 'متابعة' %></button>
+        </form>
+      <% } %>
+      <% if (store.phone) { %><a class="btn btn-gold btn-sm" href="tel:<%= store.phone %>">اتصال</a><% } %>
+      <% if (store.whatsapp) { %><a class="btn btn-dark btn-sm" href="https://wa.me/2<%= store.whatsapp %>" target="_blank">واتساب</a><% } %>
+    </div>
+
+    <div class="panel" style="margin-top:20px">
+      <h3>عن المتجر</h3>
+      <p><%= store.description || 'لا يوجد وصف' %></p>
+    </div>
+
+    <div class="section-head"><h2>منتجات المتجر</h2></div>
+    <% if (!products.length) { %><p class="empty">لا توجد منتجات بعد.</p><% } %>
+    <div class="grid" style="margin-bottom:30px">
+      <% products.forEach(p => { %>
+        <a class="card" href="/product/<%= p.id %>">
+          <div class="card-img"><img src="<%= p.image || 'https://placehold.co/400x300' %>"></div>
+          <div class="card-body">
+            <p class="card-title"><%= p.title %></p>
+            <p class="card-price"><%= p.price ? p.price.toLocaleString('ar-EG') + ' ج.م' : '' %></p>
+          </div>
+        </a>
+      <% }) %>
+    </div>
+
+    <div class="panel">
+      <h3>التقييمات</h3>
+      <% reviews.forEach(r => { %>
+        <div class="review-item"><strong><%= r.userName %></strong> <span class="stars">★ <%= r.rating %></span><p><%= r.comment %></p></div>
+      <% }) %>
+      <% if (currentUser) { %>
+        <h4 style="margin-top:20px">أضف تقييمك</h4>
+        <form method="POST" action="/review/<%= store.id %>">
+          <div class="field">
+            <label>التقييم</label>
+            <select name="rating" required>
+              <option value="5">★★★★★ ممتاز</option>
+              <option value="4">★★★★ جيد جدًا</option>
+              <option value="3">★★★ متوسط</option>
+              <option value="2">★★ ضعيف</option>
+              <option value="1">★ سيء</option>
+            </select>
+          </div>
+          <div class="field"><textarea name="comment" rows="2" placeholder="اكتب رأيك..."></textarea></div>
+          <button class="btn btn-gold">إرسال التقييم</button>
+        </form>
+      <% } else { %>
+        <p><a href="/login" style="color:var(--gold-500)">سجّل الدخول</a> لإضافة تقييم.</p>
+      <% } %>
+    </div>
+  </div>
+  <%- include('partials/footer') %>
+</body>
+</html>

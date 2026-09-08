@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head><%- include('../partials/head', {pageTitle: 'الإعلانات'}) %></head>
+<body>
+  <%- include('../partials/header') %>
+  <div class="container dash-layout">
+    <%- include('../partials/admin-nav') %>
+    <div>
+      <h1 style="font-size:22px">إدارة الإعلانات المميزة</h1>
+      <div class="panel">
+        <form method="POST" action="/admin/ads" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
+          <select name="type" style="padding:10px;border:1px solid var(--line);border-radius:8px">
+            <option value="featured_product">منتج مميز</option>
+            <option value="sponsored_product">منتج ممول</option>
+            <option value="featured_store">متجر مميز</option>
+            <option value="banner">بانر إعلاني</option>
+          </select>
+          <select name="targetType" style="padding:10px;border:1px solid var(--line);border-radius:8px">
+            <option value="product">منتج</option>
+            <option value="store">متجر</option>
+          </select>
+          <input type="number" name="targetId" placeholder="معرّف الهدف (ID)" required style="width:160px;padding:10px;border:1px solid var(--line);border-radius:8px">
+          <input type="date" name="startDate" style="padding:10px;border:1px solid var(--line);border-radius:8px">
+          <input type="date" name="endDate" style="padding:10px;border:1px solid var(--line);border-radius:8px">
+          <button class="btn btn-gold">إضافة إعلان</button>
+        </form>
+        <table>
+          <tr><th>النوع</th><th>الهدف</th><th>المعرّف</th><th>الحالة</th></tr>
+          <% ads.forEach(a => { %>
+            <tr>
+              <td><%= a.type %></td><td><%= a.targetType %></td><td><%= a.targetId %></td>
+              <td>
+                <form method="POST" action="/admin/ads/<%= a.id %>/status" style="display:flex;gap:6px">
+                  <select name="status" onchange="this.form.submit()">
+                    <option value="active" <%= a.status==='active'?'selected':'' %>>نشط</option>
+                    <option value="paused" <%= a.status==='paused'?'selected':'' %>>متوقف</option>
+                  </select>
+                </form>
+              </td>
+            </tr>
+          <% }) %>
+        </table>
+        <% if (!ads.length) { %><p class="empty">لا توجد إعلانات.</p><% } %>
+      </div>
+    </div>
+  </div>
+  <%- include('../partials/footer') %>
+</body>
+</html>

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head><%- include('../partials/head', {pageTitle: 'التصنيفات'}) %></head>
+<body>
+  <%- include('../partials/header') %>
+  <div class="container dash-layout">
+    <%- include('../partials/admin-nav') %>
+    <div>
+      <h1 style="font-size:22px">إدارة التصنيفات</h1>
+      <div class="panel">
+        <form method="POST" action="/admin/categories" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
+          <input type="text" name="name" placeholder="اسم التصنيف" required style="flex:1;padding:10px;border:1px solid var(--line);border-radius:8px">
+          <input type="text" name="slug" placeholder="slug" required style="width:140px;padding:10px;border:1px solid var(--line);border-radius:8px">
+          <input type="text" name="icon" placeholder="🏷️" style="width:70px;padding:10px;border:1px solid var(--line);border-radius:8px">
+          <button class="btn btn-gold">إضافة</button>
+        </form>
+        <table>
+          <tr><th>الأيقونة</th><th>الاسم</th><th>slug</th><th></th></tr>
+          <% categories.forEach(c => { %>
+            <tr>
+              <td><%= c.icon %></td><td><%= c.name %></td><td><%= c.slug %></td>
+              <td><form method="POST" action="/admin/categories/<%= c.id %>/delete" onsubmit="return confirm('حذف التصنيف؟')"><button class="btn btn-danger btn-sm">حذف</button></form></td>
+            </tr>
+          <% }) %>
+        </table>
+      </div>
+    </div>
+  </div>
+  <%- include('../partials/footer') %>
+</body>
+</html>

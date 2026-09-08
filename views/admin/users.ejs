@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head><%- include('../partials/head', {pageTitle: 'المستخدمون'}) %></head>
+<body>
+  <%- include('../partials/header') %>
+  <div class="container dash-layout">
+    <%- include('../partials/admin-nav') %>
+    <div>
+      <h1 style="font-size:22px">إدارة المستخدمين</h1>
+      <div class="panel">
+        <table>
+          <tr><th>الاسم</th><th>البريد</th><th>الهاتف</th><th>الدور</th><th></th></tr>
+          <% users.forEach(u => { %>
+            <tr>
+              <td><%= u.name %></td><td><%= u.email %></td><td><%= u.phone||'—' %></td>
+              <td>
+                <form method="POST" action="/admin/users/<%= u.id %>/role" style="display:flex;gap:6px">
+                  <select name="role" onchange="this.form.submit()">
+                    <option value="buyer" <%= u.role==='buyer'?'selected':'' %>>مشتري</option>
+                    <option value="vendor" <%= u.role==='vendor'?'selected':'' %>>عارض</option>
+                    <option value="admin" <%= u.role==='admin'?'selected':'' %>>مدير</option>
+                  </select>
+                </form>
+              </td>
+              <td>
+                <form method="POST" action="/admin/users/<%= u.id %>/delete" onsubmit="return confirm('حذف المستخدم؟')">
+                  <button class="btn btn-danger btn-sm">حذف</button>
+                </form>
+              </td>
+            </tr>
+          <% }) %>
+        </table>
+      </div>
+    </div>
+  </div>
+  <%- include('../partials/footer') %>
+</body>
+</html>
