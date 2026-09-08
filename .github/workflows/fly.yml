@@ -1,0 +1,26 @@
+name: Deploy to Fly.io
+on:
+  push:
+    branches: [master]
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+      - name: Create app (first time only)
+        run: fly apps create aljeeza-sooq || true
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+      - name: Create data volume (first time only)
+        run: fly volumes create aljeeza_data --app aljeeza-sooq --region fra --size 1 --yes || true
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+      - name: Create uploads volume (first time only)
+        run: fly volumes create aljeeza_uploads --app aljeeza-sooq --region fra --size 1 --yes || true
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+      - name: Deploy
+        run: fly deploy --remote-only
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
