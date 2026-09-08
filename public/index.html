@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AL-JIZA SOOQ.COM | سوق الجيزة</title>
+<meta name="description" content="AL-JIZA SOOQ — صلة الوصل بين الجمهور وأصحاب المصالح في الجيزة" />
+<link rel="icon" type="image/png" href="/logo.jpg" />
+<style>
+  :root{--bg:#faf7f0;--card:#ffffff;--card2:#f4efe2;--line:#e5ddc7;--txt:#14342a;--mut:#6f8177;--acc:#0d6b4a;--acc2:#0a5a3f;--gold:#c9a227;--grn:#22c55e}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Segoe UI',Tahoma,Arial,sans-serif;background:var(--bg);color:var(--txt);min-height:100vh}
+  body.en{font-family:'Segoe UI',Arial,sans-serif}
+  a{color:inherit;text-decoration:none}
+  .top{position:sticky;top:0;z-index:50;background:rgba(250,247,240,.94);backdrop-filter:blur(8px);border-bottom:2px solid var(--gold)}
+  .top-in{max-width:1150px;margin:0 auto;padding:12px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:18px}
+  .logo .mark{width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,var(--acc),var(--gold));display:grid;place-items:center;font-size:20px}
+  .logo small{display:block;font-size:10px;color:var(--mut);font-weight:400;letter-spacing:.15em}
+  .sp{flex:1}
+  .btn{border:1px solid var(--line);background:var(--card);color:var(--txt);padding:9px 16px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit}
+  .btn:hover{border-color:var(--acc)}
+  .btn.pri{background:var(--acc);border-color:var(--acc);color:#fff}
+  .btn.pri:hover{background:var(--acc2)}
+  .lang{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .lang button{background:transparent;border:none;color:var(--mut);padding:9px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit}
+  .lang button.on{background:var(--acc);color:#fff}
+  .wrap{max-width:1150px;margin:0 auto;padding:20px 16px 60px}
+  .hero{background:linear-gradient(135deg,#eaf3ec,#faf7f0 60%),radial-gradient(circle at 85% 20%,rgba(201,162,39,.28),transparent 55%);border:1px solid var(--line);border-top:4px solid var(--gold);border-radius:20px;padding:14px;text-align:center;margin-bottom:22px}
+  .hero h1{font-size:clamp(26px,5vw,44px);font-weight:800;line-height:1.4}
+  .hero h1 span{color:var(--acc)}
+  .hero p{color:var(--mut);margin-top:10px;font-size:15px}
+  .search{display:flex;gap:8px;max-width:560px;margin:22px auto 0}
+  .search input{flex:1;height:46px;border:1px solid var(--line);background:#ffffff;border-radius:12px;color:var(--txt);padding:0 14px;font-size:14px;font-family:inherit}
+  .cats{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0}
+  .cat{border:1px solid var(--line);background:var(--card);padding:8px 16px;border-radius:999px;font-size:13px;cursor:pointer}
+  .cat.on,.cat:hover{background:var(--acc);border-color:var(--acc);color:#fff}
+  .sec-t{display:flex;align-items:center;justify-content:space-between;margin:26px 0 14px}
+  .sec-t h2{font-size:19px;border-inline-start:4px solid var(--gold);padding-inline-start:10px}
+  .sec-t small{color:var(--mut)}
+  .grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden;cursor:pointer;transition:transform .15s}
+  .card:hover{transform:translateY(-3px);border-color:var(--acc)}
+  .thumb{height:130px;background:linear-gradient(135deg,#dcefe3,#f6f1e2);display:grid;place-items:center;font-size:46px;position:relative}
+  .thumb .feat{position:absolute;top:8px;inset-inline-start:8px;background:var(--gold);color:#3d2f04;font-size:10px;font-weight:700;padding:3px 10px;border-radius:999px}
+  .cbody{padding:12px 14px}
+  .cbody h3{font-size:15px;margin-bottom:4px}
+  .cbody .meta{font-size:12px;color:var(--mut);margin-bottom:6px}
+  .cbody .desc{font-size:12.5px;color:#3c4f45;line-height:1.7;min-height:42px}
+  .cfoot{display:flex;align-items:center;justify-content:space-between;margin-top:8px;font-size:12px}
+  .rate{color:#a8821c;font-weight:700}
+  .wa{background:#22c55e;color:#fff;border:none;padding:7px 12px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit}
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:100;display:none;align-items:center;justify-content:center;padding:14px}
+  .overlay.open{display:flex}
+  .modal{background:var(--card);border:1px solid var(--line);border-radius:18px;max-width:560px;width:100%;max-height:92vh;overflow:auto;padding:22px}
+  .modal h2{font-size:19px;margin-bottom:4px}
+  .modal .sub{font-size:12.5px;color:var(--mut);margin-bottom:14px}
+  .frow{margin-bottom:12px}
+  .frow label{display:block;font-size:12.5px;font-weight:700;margin-bottom:5px}
+  .frow input,.frow select,.frow textarea{width:100%;background:#ffffff;border:1px solid var(--line);border-radius:10px;color:var(--txt);padding:10px 12px;font-size:13.5px;font-family:inherit}
+  .frow textarea{min-height:90px;resize:vertical}
+  .mrow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .xrow{display:flex;gap:8px;margin-top:14px}
+  .xrow .btn{flex:1;padding:11px}
+  .inbox{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:6px 14px}
+  .inq{border-bottom:1px solid var(--line);padding:12px 2px;font-size:13px}
+  .inq:last-child{border:none}
+  .inq .hd{display:flex;justify-content:space-between;color:var(--mut);font-size:11.5px;margin-bottom:4px}
+  .inq.unread{border-inline-start:3px solid var(--acc);padding-inline-start:8px}
+  .foot{text-align:center;color:var(--mut);font-size:12px;padding:26px 0 10px}
+  .feats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:18px 0}
+  .feat2{background:var(--card);border:1px solid var(--line);border-top:3px solid var(--gold);border-radius:14px;padding:14px 8px;text-align:center}
+  .feat2 .ic{font-size:26px}
+  .feat2 b{display:block;font-size:13px;margin-top:6px}
+  .feat2 small{color:var(--mut);font-size:11px}
+  .empty{text-align:center;color:var(--mut);padding:34px 10px;font-size:14px}
+  @media(max-width:640px){.mrow{grid-template-columns:1fr}.hero{padding:28px 16px}.feats{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<div class="top"><div class="top-in">
+  <a class="logo" href="#" onclick="go('home');return false"><img src="/logo.jpg" alt="AL-JIZA SOOQ" style="width:42px;height:42px;border-radius:12px;object-fit:cover" /><span>AL-JIZA SOOQ<small>سوق الجيزة</small></span></a>
+  <span class="sp"></span>
+  <button class="btn" data-i="inbox" onclick="go('inbox')">📥 الوارد</button>
+  <button class="btn pri" data-i="add" onclick="openBiz()">+ أضف مصلحتك</button>
+  <span class="lang"><button id="b-ar" class="on" onclick="setLang('ar')">AR</button><button id="b-en" onclick="setLang('en')">EN</button></span>
+</div></div>
+
+<div class="wrap">
+  <div id="v-home">
+    <div class="hero">
+      <img src="/logo.jpg" alt="AL-JIZA SOOQ" style="width:100%;height:auto;border-radius:14px;display:block" />
+      <p data-i="hsub">سوّق منتجك أو خدمتك مجاناً، ودع الزبائن يتواصلون معك مباشرة</p>
+      <div class="search">
+        <input id="q" data-ph="ph" placeholder="ابحث عن مطعم، ورشة، صيدلية..." oninput="render()" />
+        <button class="btn pri" data-i="go" onclick="render()">بحث</button>
+      </div>
+    </div>
+    <div class="feats">
+      <div class="feat2"><div class="ic">🏪</div><b data-i="f1t">للمتاجر</b><small data-i="f1s">اعرض منتجاتك</small></div>
+      <div class="feat2"><div class="ic">🔍</div><b data-i="f2t">استعلام</b><small data-i="f2s">ابحث بسهولة</small></div>
+      <div class="feat2"><div class="ic">🛒</div><b data-i="f3t">تسوق</b><small data-i="f3s">ادفع بأمان</small></div>
+      <div class="feat2"><div class="ic">💳</div><b data-i="f4t">دفع آمن</b><small data-i="f4s">بطرق متعددة</small></div>
+    </div>
+    <div class="cats" id="cats"></div>
+    <div class="sec-t"><h2 data-i="feat">⭐ مصالح مميزة</h2><small data-i="n1" id="n1"></small></div>
+    <div class="grid" id="g-feat"></div>
+    <div class="sec-t"><h2 data-i="all">🏪 كل المصالح</h2><small data-i="n2" id="n2"></small></div>
+    <div class="grid" id="g-all"></div>
+  </div>
+
+  <div id="v-inbox" style="display:none">
+    <div class="sec-t"><h2 data-i="inboxT">📥 رسائل الجمهور</h2><button class="btn" data-i="back" onclick="go('home')">→ عودة</button></div>
+    <div class="inbox" id="inbox"></div>
+  </div>
+</div>
+
+<div class="foot">AL-JIZA SOOQ.COM © 2026 — <span data-i="foot">صلة الوصل بين الجمهور وأصحاب المصالح</span></div>
+
+<div class="overlay" id="ov"><div class="modal" id="modal"></div></div>
+
+<script>
+var LANG = localStorage.getItem('sooq_lang') || 'ar';
+var BIZ = [], CAT = 'all';
+var CATS = [
+  {id:'all', ar:'الكل', en:'All', ic:'🛍️'},
+  {id:'food', ar:'مطاعم وأكل', en:'Food', ic:'🍽️'},
+  {id:'health', ar:'صحة وصيدليات', en:'Health', ic:'💊'},
+  {id:'cars', ar:'سيارات وورش', en:'Cars', ic:'🚗'},
+  {id:'education', ar:'تعليم', en:'Education', ic:'📚'},
+  {id:'fashion', ar:'أزياء', en:'Fashion', ic:'👗'},
+  {id:'realestate', ar:'عقارات', en:'Real Estate', ic:'🏠'},
+  {id:'other', ar:'أخرى', en:'Other', ic:'📦'}
+];
+var T = {
+    ar: {h1:'سوق الجيزة — <span>صلة الوصل</span> بين الجمهور وأصحاب المصالح', hsub:'سوّق منتجك أو خدمتك مجاناً، ودع الزبائن يتواصلون معك مباشرة', ph:'ابحث عن مطعم، ورشة، صيدلية...', go:'بحث', feat:'⭐ مصالح مميزة', all:'🏪 كل المصالح', inbox:'📥 الوارد', add:'+ أضف مصلحتك', inboxT:'📥 رسائل الجمهور', back:'→ عودة', foot:'صلة الوصل بين الجمهور وأصحاب المصالح', contact:'تواصل', details:'التفاصيل', call:'📞 اتصال', wa:'واتساب', send:'✉️ أرسل رسالة', name:'الاسم', phone:'الهاتف', msg:'رسالتك', cancel:'إلغاء', save:'حفظ المصلحة', bname:'اسم المصلحة', cat:'التصنيف', addr:'العنوان', desc:'وصف النشاط', sent:'تم إرسال رسالتك بنجاح ✅', added:'تمت إضافة مصلحتك بنجاح ✅', nores:'لا توجد نتائج مطابقة', noinbox:'لا توجد رسائل بعد', view:'عرض', to:'إلى', f1t:'للمتاجر', f1s:'اعرض منتجاتك', f2t:'استعلام', f2s:'ابحث بسهولة', f3t:'تسوق', f3s:'ادفع بأمان', f4t:'دفع آمن', f4s:'بطرق متعددة'},
+  en: {h1:'Giza Market — the <span>bridge</span> between public & businesses', hsub:'Market your product or service for free, let customers reach you directly', ph:'Search restaurant, workshop, pharmacy...', go:'Search', feat:'⭐ Featured', all:'🏪 All businesses', inbox:'📥 Inbox', add:'+ Add business', inboxT:'📥 Public messages', back:'→ Back', foot:'The bridge between public & businesses', contact:'Contact', details:'Details', call:'📞 Call', wa:'WhatsApp', send:'✉️ Send message', name:'Name', phone:'Phone', msg:'Your message', cancel:'Cancel', save:'Save business', bname:'Business name', cat:'Category', addr:'Address', desc:'Description', sent:'Message sent ✅', added:'Business added ✅', nores:'No matching results', noinbox:'No messages yet', view:'View', to:'To', f1t:'For stores', f1s:'Showcase products', f2t:'Search', f2s:'Find easily', f3t:'Shop', f3s:'Pay safely', f4t:'Secure pay', f4s:'Many methods'}
+};
+function t(k){ return T[LANG][k] || k; }
+function loc(b, f){ return (LANG==='en' && b[f+'En']) ? b[f+'En'] : b[f]; }
+function catName(id){ var c = CATS.find(x=>x.id===id); return c ? (LANG==='ar'?c.ar:c.en) : id; }
+function catIcon(id){ var c = CATS.find(x=>x.id===id); return c ? c.ic : '📦'; }
+
+async function api(m, u, b){
+  var o = {method:m, headers:{'Content-Type':'application/json'}};
+  if(b) o.body = JSON.stringify(b);
+  var r = await fetch(u, o);
+  return r.json();
+}
+async function load(){ try{ BIZ = await api('GET','/api/businesses'); }catch(e){ BIZ = []; } render(); }
+
+function setLang(l){
+  LANG = l; localStorage.setItem('sooq_lang', l);
+  document.getElementById('b-ar').className = l==='ar'?'on':'';
+  document.getElementById('b-en').className = l==='en'?'on':'';
+  document.documentElement.lang = l; document.documentElement.dir = l==='ar'?'rtl':'ltr';
+  document.body.className = l==='en'?'en':'';
+  document.querySelectorAll('[data-i]').forEach(function(el){ el.innerHTML = t(el.getAttribute('data-i')); });
+  document.querySelectorAll('[data-ph]').forEach(function(el){ el.placeholder = t(el.getAttribute('data-ph')); });
+  render();
+}
+
+function go(v){
+  document.getElementById('v-home').style.display = v==='home'?'block':'none';
+  document.getElementById('v-inbox').style.display = v==='inbox'?'block':'none';
+  if(v==='inbox') renderInbox();
+  window.scrollTo(0,0);
+}
+
+function card(b){
+  var wa = (b.whatsapp||'').replace(/\D/g,'');
+  var waLink = wa ? 'https://wa.me/2'+wa : '#';
+  return '<div class="card" onclick="openProfile('+b.id+')">'
+    + '<div class="thumb">'+catIcon(b.category)+(b.featured?'<span class="feat">⭐</span>':'')+'</div>'
+    + '<div class="cbody"><h3>'+esc(loc(b,'name'))+'</h3>'
+    + '<div class="meta">'+catName(b.category)+' • '+esc(loc(b,'address'))+'</div>'
+    + '<div class="desc">'+esc(loc(b,'description'))+'</div>'
+    + '<div class="cfoot"><span class="rate">★ '+b.rating+'</span>'
+    + '<button class="wa" onclick="event.stopPropagation();window.open(\''+waLink+'\',\'_blank\')">واتساب</button></div>'
+    + '</div></div>';
+}
+function esc(s){ return String(s||'').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function render(){
+  var q = (document.getElementById('q').value||'').trim();
+  var box = document.getElementById('cats'); box.innerHTML='';
+  CATS.forEach(function(c){
+    var b = document.createElement('span');
+    b.className = 'cat'+(CAT===c.id?' on':'');
+    b.textContent = c.ic+' '+(LANG==='ar'?c.ar:c.en);
+    b.onclick = function(){ CAT=c.id; render(); };
+    box.appendChild(b);
+  });
+  var list = BIZ.filter(function(b){
+    if(CAT!=='all' && b.category!==CAT) return false;
+    if(q && (b.name+' '+(b.nameEn||'')+' '+(b.description||'')+' '+(b.address||'')).indexOf(q)===-1) return false;
+    return true;
+  });
+  var feat = list.filter(b=>b.featured), all = list;
+  document.getElementById('n1').textContent = feat.length;
+  document.getElementById('n2').textContent = all.length;
+  document.getElementById('g-feat').innerHTML = feat.length?feat.map(card).join(''):'<div class="empty">'+t('nores')+'</div>';
+  document.getElementById('g-all').innerHTML = all.length?all.map(card).join(''):'<div class="empty">'+t('nores')+'</div>';
+}
+
+function openProfile(id){
+  var b = BIZ.find(x=>x.id===id); if(!b) return;
+  var wa = (b.whatsapp||'').replace(/\D/g,'');
+  document.getElementById('modal').innerHTML =
+    '<h2>'+esc(loc(b,'name'))+'</h2><div class="sub">'+catIcon(b.category)+' '+catName(b.category)+' • ★ '+b.rating+' • '+esc(loc(b,'address'))+'</div>'
+    + '<p style="font-size:13.5px;line-height:1.9;margin-bottom:14px">'+esc(loc(b,'description'))+'</p>'
+    + '<div class="xrow"><a class="btn" style="text-align:center" href="tel:'+esc(b.phone)+'">'+t('call')+'<br>'+esc(b.phone)+'</a>'
+    + (wa?'<a class="btn" style="text-align:center;background:#22c55e;border-color:#22c55e;color:#fff" target="_blank" href="https://wa.me/2'+wa+'">'+t('wa')+'</a>':'')+'</div>'
+    + '<div class="xrow"><button class="btn pri" onclick="openMsg('+b.id+')">'+t('send')+'</button>'
+    + '<button class="btn" onclick="closeOv()">'+t('cancel')+'</button></div>';
+  document.getElementById('ov').className = 'overlay open';
+}
+function openMsg(id){
+  var b = BIZ.find(x=>x.id===id);
+  document.getElementById('modal').innerHTML =
+    '<h2>'+t('send')+'</h2><div class="sub">'+t('to')+': '+esc(loc(b,'name'))+'</div>'
+    + '<div class="frow"><label>'+t('name')+'</label><input id="m-name"></div>'
+    + '<div class="frow"><label>'+t('phone')+'</label><input id="m-phone"></div>'
+    + '<div class="frow"><label>'+t('msg')+'</label><textarea id="m-msg"></textarea></div>'
+    + '<div class="xrow"><button class="btn pri" onclick="sendMsg('+id+')">'+t('send')+'</button>'
+    + '<button class="btn" onclick="openProfile('+id+')">'+t('back')+'</button></div>';
+}
+async function sendMsg(id){
+  var n = document.getElementById('m-name').value.trim(),
+      p = document.getElementById('m-phone').value.trim(),
+      m = document.getElementById('m-msg').value.trim();
+  if(!n || !m){ alert('!'); return; }
+  await api('POST','/api/inquiries',{businessId:id,name:n,phone:p,message:m});
+  alert(t('sent')); closeOv();
+}
+function openBiz(){
+  var opts = CATS.filter(c=>c.id!=='all').map(c=>'<option value="'+c.id+'">'+(LANG==='ar'?c.ar:c.en)+'</option>').join('');
+  document.getElementById('modal').innerHTML =
+    '<h2>'+t('add')+'</h2><div class="sub">'+t('hsub')+'</div>'
+    + '<div class="mrow"><div class="frow"><label>'+t('bname')+' *</label><input id="b-name"></div>'
+    + '<div class="frow"><label>'+t('cat')+'</label><select id="b-cat">'+opts+'</select></div></div>'
+    + '<div class="mrow"><div class="frow"><label>'+t('phone')+' *</label><input id="b-phone" placeholder="01xxxxxxxxx"></div>'
+    + '<div class="frow"><label>'+t('addr')+'</label><input id="b-addr"></div></div>'
+    + '<div class="frow"><label>'+t('desc')+'</label><textarea id="b-desc"></textarea></div>'
+    + '<div class="xrow"><button class="btn pri" onclick="saveBiz()">'+t('save')+'</button>'
+    + '<button class="btn" onclick="closeOv()">'+t('cancel')+'</button></div>';
+  document.getElementById('ov').className = 'overlay open';
+}
+async function saveBiz(){
+  var d = {name:document.getElementById('b-name').value.trim(), category:document.getElementById('b-cat').value,
+    phone:document.getElementById('b-phone').value.trim(), address:document.getElementById('b-addr').value.trim(),
+    description:document.getElementById('b-desc').value.trim()};
+  if(!d.name || !d.phone){ alert('!'); return; }
+  await api('POST','/api/businesses',d);
+  alert(t('added')); closeOv(); load();
+}
+async function renderInbox(){
+  var items = [];
+  try{ items = await api('GET','/api/inquiries'); }catch(e){}
+  document.getElementById('inbox').innerHTML = items.length ? items.map(function(q){
+    return '<div class="inq'+(q.read?'':' unread')+'"><div class="hd"><span>'+esc(q.businessName)+' • '+esc(q.name)+(q.phone?' • '+esc(q.phone):'')+'</span><span>'+new Date(q.createdAt).toLocaleString()+'</span></div><div>'+esc(q.message)+'</div></div>';
+  }).join('') : '<div class="empty">'+t('noinbox')+'</div>';
+}
+function closeOv(){ document.getElementById('ov').className = 'overlay'; }
+document.getElementById('ov').addEventListener('click', function(e){ if(e.target===this) closeOv(); });
+
+setLang(LANG); load();
+</script>
+</body>
+</html>
