@@ -191,7 +191,7 @@ function card(b){
   var wa = (b.whatsapp||'').replace(/\D/g,'');
   var waLink = wa ? 'https://wa.me/2'+wa : '#';
   return '<div class="card" onclick="openProfile('+b.id+')">'
-    + '<div class="thumb">'+catIcon(b.category,76)+(b.featured?'<span class="feat">⭐</span>':'')+'</div>'
+    + '<div class="thumb">'+(b.image?'<img src="'+b.image+'" alt="" style="width:100%;height:100%;object-fit:cover" />':catIcon(b.category,76))+(b.featured?'<span class="feat">⭐</span>':'')+'</div>'
     + '<div class="cbody"><h3>'+esc(loc(b,'name'))+'</h3>'
     + '<div class="meta">'+catName(b.category)+' • '+esc(loc(b,'address'))+'</div>'
     + '<div class="desc">'+esc(loc(b,'description'))+'</div>'
@@ -229,6 +229,7 @@ function openProfile(id){
   document.getElementById('modal').innerHTML =
     '<h2>'+esc(loc(b,'name'))+'</h2><div class="sub">'+catIcon(b.category,24)+' '+catName(b.category)+' • ★ '+b.rating+' • '+esc(loc(b,'address'))+'</div>'
     + '<p style="font-size:13.5px;line-height:1.9;margin-bottom:14px">'+esc(loc(b,'description'))+'</p>'
+    + ((b.images&&b.images.length)?'<div style="display:flex;gap:8px;margin-bottom:14px;overflow-x:auto">'+b.images.map(function(im){return '<img src="'+im+'" style="width:110px;height:110px;object-fit:cover;border-radius:12px;border:1px solid var(--line)" />'}).join('')+'</div>':'')
     + '<div class="xrow"><a class="btn" style="text-align:center" href="tel:'+esc(b.phone)+'">'+t('call')+'<br>'+esc(b.phone)+'</a>'
     + (wa?'<a class="btn" style="text-align:center;background:#22c55e;border-color:#22c55e;color:#fff" target="_blank" href="https://wa.me/2'+wa+'">'+t('wa')+'</a>':'')+'</div>'
     + '<div class="xrow"><button class="btn pri" onclick="openMsg('+b.id+')">'+t('send')+'</button>'
@@ -262,6 +263,7 @@ function openBiz(){
     + '<div class="mrow"><div class="frow"><label>'+t('phone')+' *</label><input id="b-phone" placeholder="01xxxxxxxxx"></div>'
     + '<div class="frow"><label>'+t('addr')+'</label><input id="b-addr"></div></div>'
     + '<div class="frow"><label>'+t('desc')+'</label><textarea id="b-desc"></textarea></div>'
+    + '<div class="frow"><label>📷 صور المنتجات (حتى 3)</label><input type="file" id="b-imgs" accept="image/*" multiple onchange="prevImgs(this)"><div id="b-prev" style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap"></div></div>'
     + '<div class="xrow"><button class="btn pri" onclick="saveBiz()">'+t('save')+'</button>'
     + '<button class="btn" onclick="closeOv()">'+t('cancel')+'</button></div>';
   document.getElementById('ov').className = 'overlay open';
@@ -271,8 +273,33 @@ async function saveBiz(){
     phone:document.getElementById('b-phone').value.trim(), address:document.getElementById('b-addr').value.trim(),
     description:document.getElementById('b-desc').value.trim()};
   if(!d.name || !d.phone){ alert('!'); return; }
+  d.images = await readImgs(document.getElementById('b-imgs'));
+  if(d.images.length) d.image = d.images[0];
   await api('POST','/api/businesses',d);
   alert(t('added')); closeOv(); load();
+}
+function readImgs(input){
+  return new Promise(function(res){
+    var files = Array.prototype.slice.call(input.files||[]).filter(function(f){return f.size <= 700*1024;}).slice(0,3);
+    if(!files.length) return res([]);
+    var out = new Array(files.length), done = 0;
+    files.forEach(function(f,i){
+      var r = new FileReader();
+      function fin(){ done++; if(done===files.length) res(out.filter(Boolean)); }
+      r.onload = function(){ out[i]=r.result; fin(); };
+      r.onerror = fin;
+      r.readAsDataURL(f);
+    });
+  });
+}
+function prevImgs(input){
+  var box = document.getElementById('b-prev'); box.innerHTML = '';
+  Array.prototype.slice.call(input.files||[]).slice(0,3).forEach(function(f){
+    if(f.size > 700*1024) return;
+    var r = new FileReader();
+    r.onload = function(){ var im = document.createElement('img'); im.src = r.result; im.style.cssText='width:64px;height:64px;object-fit:cover;border-radius:8px;border:1px solid var(--line)'; box.appendChild(im); };
+    r.readAsDataURL(f);
+  });
 }
 async function renderInbox(){
   var items = [];

@@ -32,7 +32,7 @@ module.exports = async (req, res) => {
       phone: b.phone, whatsapp: b.whatsapp || b.phone,
       address: b.address || '', addressEn: b.addressEn || '',
       description: b.description || '', descriptionEn: b.descriptionEn || '',
-      image: b.image || '', featured: false, rating: 5.0,
+      image: b.image || '', images: Array.isArray(b.images) ? b.images.slice(0,3) : [], featured: false, rating: 5.0,
       createdAt: new Date().toISOString()
     };
     db.businesses.push(biz);
