@@ -1,0 +1,19 @@
+{
+  "name": "AL-JIZA SOOQ.COM | سوق الجيزة",
+  "short_name": "سوق الجيزة",
+  "description": "صلة الوصل بين الجمهور وأصحاب المصالح",
+  "start_url": "/",
+  "display": "standalone",
+  "dir": "rtl",
+  "lang": "ar",
+  "background_color": "#faf7f0",
+  "theme_color": "#0d6b4a",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
