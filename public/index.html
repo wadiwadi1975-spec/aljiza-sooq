@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8" />
@@ -88,6 +88,10 @@
   <a class="logo" href="#" onclick="go('home');return false"><img src="/logo.jpg" alt="AL-JIZA SOOQ" style="width:42px;height:42px;border-radius:12px;object-fit:cover" /><span>AL-JIZA SOOQ<small>سوق الجيزة</small></span></a>
   <span class="sp"></span>
   <button class="btn" data-i="inbox" onclick="go('inbox')">📥 الوارد</button>
+  <button class="btn" data-i="orders" onclick="go('orders')">📦 الطلبات</button>
+  <button class="btn" id="nav-vendor" style="display:none" data-i="mystores" onclick="go('vendor')">🏪 متاجري</button>
+  <button class="btn" id="nav-admin" style="display:none" data-i="admin" onclick="go('admin')">🛡️ الإدارة</button>
+  <span id="auth-area"></span>
   <button class="btn pri" data-i="add" onclick="openBiz()">+ أضف مصلحتك</button>
   <span class="lang"><button id="b-ar" class="on" onclick="setLang('ar')">AR</button><button id="b-en" onclick="setLang('en')">EN</button></span>
 </div></div>
@@ -118,6 +122,26 @@
   <div id="v-inbox" style="display:none">
     <div class="sec-t"><h2 data-i="inboxT">📥 رسائل الجمهور</h2><button class="btn" data-i="back" onclick="go('home')">→ عودة</button></div>
     <div class="inbox" id="inbox"></div>
+  </div>
+
+  <div id="v-orders" style="display:none">
+    <div class="sec-t"><h2 data-i="ordersT">📦 طلبات الدفع</h2><button class="btn" data-i="back" onclick="go('home')">→ عودة</button></div>
+    <div class="inbox" id="orders"></div>
+  </div>
+
+  <div id="v-vendor" style="display:none">
+    <div class="sec-t"><h2 data-i="mystoresT">🏪 متاجري وفوترتي</h2><button class="btn" data-i="back" onclick="go('home')">→ عودة</button></div>
+    <div id="vendor"></div>
+  </div>
+
+  <div id="v-profile" style="display:none">
+    <div class="sec-t"><h2 data-i="profileT">👤 حسابي</h2><button class="btn" data-i="back" onclick="go('home')">→ عودة</button></div>
+    <div class="inbox" id="profile" style="padding:16px"></div>
+  </div>
+
+  <div id="v-admin" style="display:none">
+    <div class="sec-t"><h2 data-i="adminT">🛡️ إيرادات المنصة والاشتراكات</h2><button class="btn" data-i="back" onclick="go('home')">→ عودة</button></div>
+    <div id="adminrev"></div>
   </div>
 </div>
 
@@ -156,8 +180,8 @@ var CATS = [
   {id:'other', ar:'????', en:'Other', ic:'/icons/other.png'}
 ];
 var T = {
-    ar: {h1:'سوق الجيزة — <span>صلة الوصل</span> بين الجمهور وأصحاب المصالح', hsub:'سوّق منتجك أو خدمتك مجاناً، ودع الزبائن يتواصلون معك مباشرة', ph:'ابحث عن مطعم، ورشة، صيدلية...', go:'بحث', feat:'⭐ مصالح مميزة', all:'🏪 كل المصالح', inbox:'📥 الوارد', add:'+ أضف مصلحتك', inboxT:'📥 رسائل الجمهور', back:'→ عودة', foot:'صلة الوصل بين الجمهور وأصحاب المصالح', contact:'تواصل', details:'التفاصيل', call:'📞 اتصال', wa:'واتساب', send:'✉️ أرسل رسالة', name:'الاسم', phone:'الهاتف', msg:'رسالتك', cancel:'إلغاء', save:'حفظ المصلحة', bname:'اسم المصلحة', cat:'التصنيف', addr:'العنوان', desc:'وصف النشاط', sent:'تم إرسال رسالتك بنجاح ✅', added:'تمت إضافة مصلحتك بنجاح ✅', nores:'لا توجد نتائج مطابقة', noinbox:'لا توجد رسائل بعد', view:'عرض', to:'إلى', f1t:'للمتاجر', f1s:'اعرض منتجاتك', f2t:'استعلام', f2s:'ابحث بسهولة', f3t:'تسوق', f3s:'ادفع بأمان', f4t:'دفع آمن', f4s:'بطرق متعددة'},
-  en: {h1:'Giza Market — the <span>bridge</span> between public & businesses', hsub:'Market your product or service for free, let customers reach you directly', ph:'Search restaurant, workshop, pharmacy...', go:'Search', feat:'⭐ Featured', all:'🏪 All businesses', inbox:'📥 Inbox', add:'+ Add business', inboxT:'📥 Public messages', back:'→ Back', foot:'The bridge between public & businesses', contact:'Contact', details:'Details', call:'📞 Call', wa:'WhatsApp', send:'✉️ Send message', name:'Name', phone:'Phone', msg:'Your message', cancel:'Cancel', save:'Save business', bname:'Business name', cat:'Category', addr:'Address', desc:'Description', sent:'Message sent ✅', added:'Business added ✅', nores:'No matching results', noinbox:'No messages yet', view:'View', to:'To', f1t:'For stores', f1s:'Showcase products', f2t:'Search', f2s:'Find easily', f3t:'Shop', f3s:'Pay safely', f4t:'Secure pay', f4s:'Many methods'}
+    ar: {h1:'سوق الجيزة — <span>صلة الوصل</span> بين الجمهور وأصحاب المصالح', hsub:'سوّق منتجك أو خدمتك مجاناً، ودع الزبائن يتواصلون معك مباشرة', ph:'ابحث عن مطعم، ورشة، صيدلية...', go:'بحث', feat:'⭐ مصالح مميزة', all:'🏪 كل المصالح', inbox:'📥 الوارد', add:'+ أضف مصلحتك', inboxT:'📥 رسائل الجمهور', back:'→ عودة', foot:'صلة الوصل بين الجمهور وأصحاب المصالح', contact:'تواصل', details:'التفاصيل', call:'📞 اتصال', wa:'واتساب', send:'✉️ أرسل رسالة', name:'الاسم', phone:'الهاتف', msg:'رسالتك', cancel:'إلغاء', save:'حفظ المصلحة', bname:'اسم المصلحة', cat:'التصنيف', addr:'العنوان', desc:'وصف النشاط', sent:'تم إرسال رسالتك بنجاح ✅', added:'تمت إضافة مصلحتك بنجاح ✅', nores:'لا توجد نتائج مطابقة', noinbox:'لا توجد رسائل بعد', view:'عرض', to:'إلى', f1t:'للمتاجر', f1s:'اعرض منتجاتك', f2t:'استعلام', f2s:'ابحث بسهولة', f3t:'تسوق', f3s:'ادفع بأمان', f4t:'دفع آمن', f4s:'بطرق متعددة', orders:'📦 الطلبات', ordersT:'📦 طلبات الدفع', orderNow:'🛒 اطلب الآن', payM:'طريقة الدفع', amount:'المبلغ (ل.س)', addr2:'عنوان التوصيل', notes:'تفاصيل الطلب', orderBtn:'تأكيد الطلب', orderOk:'تم استلام طلبك ✅', orderCode:'رقم الطلب', noorders:'لا توجد طلبات بعد', st_pending:'بانتظار التأكيد', st_confirmed:'مؤكد', st_paid:'مدفوع', st_rejected:'مرفوض', st_done:'مكتمل', doConfirm:'تأكيد', doPaid:'تم الدفع', doDone:'إتمام', doReject:'رفض', login:'دخول', register:'حساب جديد', logout:'خروج', profile:'حسابي', mystores:'🏪 متاجري', admin:'🛡️ الإدارة', mystoresT:'🏪 متاجري وفوترتي', profileT:'👤 حسابي', adminT:'🛡️ إيرادات المنصة والاشتراكات', fullname:'الاسم الثلاثي', password:'كلمة المرور', iamvendor:'أنا تاجر (عندي مصلحة)', dologin:'تسجيل الدخول', doregister:'إنشاء الحساب', haveaccount:'عندي حساب؟ دخول', noaccount:'جديد؟ أنشئ حساباً', saveProfile:'حفظ التعديلات', needlogin:'سجّل الدخول أولاً', mybiz:'مصالحي', billing:'الفوترة', model:'نظام الدفع للمنصة', perOp:'الدفع لكل عملية', monthly:'اشتراك شهري', yearly:'اشتراك سنوي', trial:'فترة مجانية', active:'نشط', none:'غير مشترك', opsdue:'رسوم مستحقة', opscount:'عدد العمليات', subscribe:'اشترك الآن', start:'البداية', end:'النهاية', usedtrial:'استُخدمت الفترة المجانية', paysetup:'وسائل الدفع المقبولة', paylink:'رابط الدفع (اختياري)', paydetails:'تفاصيل الدفع', savepay:'حفظ وسائل الدفع', showqr:'عرض QR', revTotal:'إجمالي الإيرادات', revVendors:'إجمالي التجار', revActive:'متاجر نشطة', revTrial:'في الفترة المجانية', revMonthly:'اشتراكات شهرية', revYearly:'اشتراكات سنوية', revOps:'عمليات مدفوعة', revMonth:'إيراد شهري', revYear:'إيراد سنوي', revPerOp:'إيراد العمليات', revExp:'تنتهي قريباً', revPrices:'أسعار المنصة', revLedger:'سجل الإيرادات', revVendorsL:'التجار', opPrice:'سعر العملية', monthPrice:'سعر الشهري', yearPrice:'سعر السنوي', trialDays:'أيام المجانية', enableMods:'تفعيل الأنظمة', saveSettings:'حفظ الإعدادات', st_cancelled:'ملغي', doCancel:'إلغاء الطلب', loginFirst:'هذه الميزة للتجار — سجّل حساب تاجر'},
+  en: {h1:'Giza Market — the <span>bridge</span> between public & businesses', hsub:'Market your product or service for free, let customers reach you directly', ph:'Search restaurant, workshop, pharmacy...', go:'Search', feat:'⭐ Featured', all:'🏪 All businesses', inbox:'📥 Inbox', add:'+ Add business', inboxT:'📥 Public messages', back:'→ Back', foot:'The bridge between public & businesses', contact:'Contact', details:'Details', call:'📞 Call', wa:'WhatsApp', send:'✉️ Send message', name:'Name', phone:'Phone', msg:'Your message', cancel:'Cancel', save:'Save business', bname:'Business name', cat:'Category', addr:'Address', desc:'Description', sent:'Message sent ✅', added:'Business added ✅', nores:'No matching results', noinbox:'No messages yet', view:'View', to:'To', f1t:'For stores', f1s:'Showcase products', f2t:'Search', f2s:'Find easily', f3t:'Shop', f3s:'Pay safely', f4t:'Secure pay', f4s:'Many methods', orders:'?? Orders', ordersT:'?? Payment orders', orderNow:'?? Order now', payM:'Payment method', amount:'Amount (SYP)', addr2:'Delivery address', notes:'Order details', orderBtn:'Confirm order', orderOk:'Order received ?', orderCode:'Order no.', noorders:'No orders yet', st_pending:'Pending', st_confirmed:'Confirmed', st_paid:'Paid', st_rejected:'Rejected', st_done:'Done', doConfirm:'Confirm', doPaid:'Paid', doDone:'Complete', doReject:'Reject', login:'Login', register:'Sign up', logout:'Logout', profile:'My account', mystores:'?? My stores', admin:'??? Admin', mystoresT:'?? My stores & billing', profileT:'?? My account', adminT:'??? Platform revenue', fullname:'Full name', password:'Password', iamvendor:'I am a vendor', dologin:'Login', doregister:'Create account', haveaccount:'Have account? Login', noaccount:'New? Sign up', saveProfile:'Save', needlogin:'Login first', mybiz:'My businesses', billing:'Billing', model:'Platform billing model', perOp:'Pay per operation', monthly:'Monthly', yearly:'Yearly', trial:'Free trial', active:'Active', none:'Not subscribed', opsdue:'Due fees', opscount:'Operations', subscribe:'Subscribe', start:'Start', end:'End', usedtrial:'Trial used', paysetup:'Accepted payment methods', paylink:'Payment link (optional)', paydetails:'Payment details', savepay:'Save methods', showqr:'Show QR', revTotal:'Total revenue', revVendors:'Total vendors', revActive:'Active stores', revTrial:'On trial', revMonthly:'Monthly subs', revYearly:'Yearly subs', revOps:'Paid ops', revMonth:'Monthly revenue', revYear:'Yearly revenue', revPerOp:'Per-op revenue', revExp:'Expiring soon', revPrices:'Platform prices', revLedger:'Revenue ledger', revVendorsL:'Vendors', opPrice:'Per-op price', monthPrice:'Monthly price', yearPrice:'Yearly price', trialDays:'Trial days', enableMods:'Enabled models', saveSettings:'Save settings', st_cancelled:'Cancelled', doCancel:'Cancel order', loginFirst:'Vendors only � register a vendor account'}
 };
 function t(k){ return T[LANG][k] || k; }
 function loc(b, f){ return (LANG==='en' && b[f+'En']) ? b[f+'En'] : b[f]; }
@@ -170,9 +194,73 @@ function catIcon(id, sz){
 
 async function api(m, u, b){
   var o = {method:m, headers:{'Content-Type':'application/json'}};
+  var tok = localStorage.getItem('sooq_token');
+  if(tok) o.headers['Authorization'] = 'Bearer '+tok;
   if(b) o.body = JSON.stringify(b);
   var r = await fetch(u, o);
-  return r.json();
+  var d = await r.json().catch(function(){return {error:'bad response'}});
+  if(r.status===401 && tok && u!=='/api/auth/login'){ logout(false); }
+  return d;
+}
+var ME = null;
+async function refreshMe(){
+  var tok = localStorage.getItem('sooq_token');
+  if(!tok){ ME = null; renderAuth(); return; }
+  try{
+    var r = await fetch('/api/auth/me', {headers:{'Authorization':'Bearer '+tok}});
+    if(r.status===200){ ME = await r.json(); }
+    else { ME = null; localStorage.removeItem('sooq_token'); }
+  }catch(e){ ME = null; }
+  renderAuth();
+}
+function renderAuth(){
+  var box = document.getElementById('auth-area');
+  if(!ME){ box.innerHTML = '<button class="btn" onclick="openAuth(\'login\')">'+t('login')+'</button> <button class="btn pri" onclick="openAuth(\'register\')">'+t('register')+'</button>'; }
+  else {
+    box.innerHTML = '<button class="btn" onclick="go(\'profile\')">👤 '+esc(ME.fullName.split(' ')[0])+'</button> <button class="btn" onclick="logout(true)">'+t('logout')+'</button>';
+  }
+  document.getElementById('nav-vendor').style.display = (ME && ME.role==='vendor') ? '' : 'none';
+  document.getElementById('nav-admin').style.display = (ME && ME.role==='admin') ? '' : 'none';
+}
+function openAuth(mode){
+  document.getElementById('modal').innerHTML =
+    '<h2>'+(mode==='login'?t('dologin'):t('doregister'))+'</h2>'
+    + (mode==='register'
+      ? '<div class="frow"><label>'+t('fullname')+' *</label><input id="a-name"></div>'
+        + '<div class="frow"><label><input type="checkbox" id="a-vendor" style="width:auto"> '+t('iamvendor')+'</label></div>'
+      : '')
+    + '<div class="frow"><label>'+t('phone')+' *</label><input id="a-phone" dir="ltr"></div>'
+    + '<div class="frow"><label>'+t('password')+' *</label><input id="a-pass" type="password"></div>'
+    + '<div class="xrow"><button class="btn pri" onclick="doAuth(\''+mode+'\')">'+(mode==='login'?t('dologin'):t('doregister'))+'</button>'
+    + '<button class="btn" onclick="openAuth(\''+(mode==='login'?'register':'login')+'\')">'+(mode==='login'?t('noaccount'):t('haveaccount'))+'</button></div>'
+    + '<div class="xrow"><button class="btn" onclick="closeOv()">'+t('cancel')+'</button></div>';
+  document.getElementById('ov').className = 'overlay open';
+}
+async function doAuth(mode){
+  var ph = document.getElementById('a-phone').value.trim(),
+      pw = document.getElementById('a-pass').value;
+  var payload, url;
+  if(mode==='register'){
+    var nm = document.getElementById('a-name').value.trim();
+    if(nm.length<3 || !ph || pw.length<4){ alert('!'); return; }
+    payload = {fullName:nm, phone:ph, password:pw, role:document.getElementById('a-vendor').checked?'vendor':'customer'};
+    url = '/api/auth/register';
+  } else {
+    if(!ph || !pw){ alert('!'); return; }
+    payload = {phone:ph, password:pw};
+    url = '/api/auth/login';
+  }
+  var r = await fetch(url, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
+  var d = await r.json();
+  if(!r.ok){ alert(d.error||'!'); return; }
+  localStorage.setItem('sooq_token', d.accessToken);
+  ME = d.user;
+  closeOv(); renderAuth(); render();
+}
+function logout(goHome){
+  localStorage.removeItem('sooq_token');
+  ME = null; renderAuth();
+  if(goHome) go('home'); else renderAuth();
 }
 async function load(){ try{ BIZ = await api('GET','/api/businesses'); }catch(e){ BIZ = []; } render(); }
 
@@ -184,13 +272,18 @@ function setLang(l){
   document.body.className = l==='en'?'en':'';
   document.querySelectorAll('[data-i]').forEach(function(el){ el.innerHTML = t(el.getAttribute('data-i')); });
   document.querySelectorAll('[data-ph]').forEach(function(el){ el.placeholder = t(el.getAttribute('data-ph')); });
-  render();
+  renderAuth(); render();
 }
 
 function go(v){
-  document.getElementById('v-home').style.display = v==='home'?'block':'none';
-  document.getElementById('v-inbox').style.display = v==='inbox'?'block':'none';
+  ['home','inbox','orders','vendor','profile','admin'].forEach(function(x){
+    document.getElementById('v-'+x).style.display = v===x?'block':'none';
+  });
   if(v==='inbox') renderInbox();
+  if(v==='orders') renderOrders();
+  if(v==='vendor') renderVendor();
+  if(v==='profile') renderProfile();
+  if(v==='admin') renderAdmin();
   window.scrollTo(0,0);
 }
 
@@ -237,10 +330,12 @@ function openProfile(id){
     '<h2>'+esc(loc(b,'name'))+'</h2><div class="sub">'+catIcon(b.category,24)+' '+catName(b.category)+' • ★ '+b.rating+' • '+esc(loc(b,'address'))+'</div>'
     + '<p style="font-size:13.5px;line-height:1.9;margin-bottom:14px">'+esc(loc(b,'description'))+'</p>'
     + ((b.images&&b.images.length)?'<div style="display:flex;gap:8px;margin-bottom:14px;overflow-x:auto">'+b.images.map(function(im){return '<img src="'+im+'" style="width:110px;height:110px;object-fit:cover;border-radius:12px;border:1px solid var(--line)" />'}).join('')+'</div>':'')
+    + ((b.paySetup&&(b.paySetup.link||(b.paySetup.details&&Object.keys(b.paySetup.details).length)))?'<div style="text-align:center;margin-bottom:14px"><div style="font-size:12px;font-weight:700;margin-bottom:6px">'+t('showqr')+'</div>'+qrImg(b.paySetup.link||JSON.stringify(b.paySetup.details))+'</div>':'')
     + '<div class="xrow"><a class="btn" style="text-align:center" href="tel:'+esc(b.phone)+'">'+t('call')+'<br>'+esc(b.phone)+'</a>'
     + (wa?'<a class="btn" style="text-align:center;background:#22c55e;border-color:#22c55e;color:#fff" target="_blank" href="https://wa.me/2'+wa+'">'+t('wa')+'</a>':'')+'</div>'
     + '<div class="xrow"><button class="btn pri" onclick="openMsg('+b.id+')">'+t('send')+'</button>'
-    + '<button class="btn" onclick="closeOv()">'+t('cancel')+'</button></div>';
+    + '<button class="btn pri" onclick="openOrder('+b.id+')">'+t('orderNow')+'</button></div>'
+    + '<div class="xrow"><button class="btn" onclick="closeOv()">'+t('cancel')+'</button></div>';
   document.getElementById('ov').className = 'overlay open';
 }
 function openMsg(id){
@@ -261,7 +356,85 @@ async function sendMsg(id){
   await api('POST','/api/inquiries',{businessId:id,name:n,phone:p,message:m});
   alert(t('sent')); closeOv();
 }
+var PAYM = [];
+async function getPayM(){
+  if(PAYM.length) return PAYM;
+  try{ PAYM = await api('GET','/api/pay-methods'); }catch(e){ PAYM = [{id:'cash',ar:'💵 كاش (نقدي)',en:'💵 Cash'}]; }
+  return PAYM;
+}
+function payLabel(id){ var m = PAYM.find(x=>x.id===id); return m ? (LANG==='ar'?m.ar:m.en) : id; }
+function payInstr(method, bizPhone){
+  var ph = bizPhone || '';
+  var M = {
+    cash: {ar:'ادفع نقداً عند الاستلام. احتفظ برقم الطلب.', en:'Pay cash on delivery. Keep your order number.'},
+    sham: {ar:'حوّل المبلغ عبر شام كاش إلى الرقم '+ph+' ثم أرسل لقطة التحويل واتساب مع رقم الطلب.', en:'Send the amount via Sham Cash to '+ph+', then WhatsApp the receipt with your order number.'},
+    syriatel: {ar:'حوّل عبر سيريتل كاش إلى الرقم '+ph+' ثم أرسل لقطة التحويل واتساب مع رقم الطلب.', en:'Send via Syriatel Cash to '+ph+', then WhatsApp the receipt with your order number.'},
+    mtn: {ar:'حوّل عبر MTN كاش إلى الرقم '+ph+' ثم أرسل لقطة التحويل واتساب مع رقم الطلب.', en:'Send via MTN Cash to '+ph+', then WhatsApp the receipt with your order number.'},
+    bank: {ar:'حوّل المبلغ تحويلاً بنكياً (تواصل مع المصلحة لأخذ رقم الحساب) وشارك الإشعار مع رقم الطلب.', en:'Bank transfer (ask the business for account number) and share the receipt with your order number.'},
+    hawala: {ar:'أرسل حوالة باسم صاحب المصلحة (تواصل معه لأخذ التفاصيل) وشارك رقم الحوالة مع رقم الطلب.', en:'Send a Hawala in the owner name (ask for details) and share the transfer number with your order number.'}
+  };
+  var x = M[method] || M.cash;
+  return LANG==='ar' ? x.ar : x.en;
+}
+async function openOrder(id){
+  var b = BIZ.find(x=>x.id===id); if(!b) return;
+  var ms = await getPayM();
+  var opts = ms.map(function(m){return '<option value="'+m.id+'">'+(LANG==='ar'?m.ar:m.en)+'</option>'}).join('');
+  document.getElementById('modal').innerHTML =
+    '<h2>'+t('orderNow')+'</h2><div class="sub">'+t('to')+': '+esc(loc(b,'name'))+'</div>'
+    + '<div class="mrow"><div class="frow"><label>'+t('name')+' *</label><input id="o-name"></div>'
+    + '<div class="frow"><label>'+t('phone')+' *</label><input id="o-phone"></div></div>'
+    + '<div class="frow"><label>'+t('addr2')+'</label><input id="o-addr"></div>'
+    + '<div class="frow"><label>'+t('notes')+'</label><textarea id="o-notes" style="min-height:60px"></textarea></div>'
+    + '<div class="mrow"><div class="frow"><label>'+t('amount')+'</label><input id="o-amount" type="number" min="0"></div>'
+    + '<div class="frow"><label>'+t('payM')+'</label><select id="o-method">'+opts+'</select></div></div>'
+    + '<div class="xrow"><button class="btn pri" onclick="sendOrder('+id+')">'+t('orderBtn')+'</button>'
+    + '<button class="btn" onclick="openProfile('+id+')">'+t('back')+'</button></div>';
+  document.getElementById('ov').className = 'overlay open';
+}
+async function sendOrder(id){
+  var b = BIZ.find(x=>x.id===id);
+  var d = {businessId:id, customerName:document.getElementById('o-name').value.trim(),
+    phone:document.getElementById('o-phone').value.trim(), address:document.getElementById('o-addr').value.trim(),
+    notes:document.getElementById('o-notes').value.trim(), amount:Number(document.getElementById('o-amount').value)||0,
+    method:document.getElementById('o-method').value};
+  if(!d.customerName || !d.phone){ alert('!'); return; }
+  var o = await api('POST','/api/orders',d);
+  document.getElementById('modal').innerHTML =
+    '<h2>'+t('orderOk')+'</h2><div class="sub">'+t('orderCode')+': <b style="color:var(--acc)">'+o.code+'</b> • '+payLabel(o.method)+'</div>'
+    + '<p style="font-size:13.5px;line-height:2;background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:12px 14px">'+payInstr(o.method, b.phone)+'</p>'
+    + '<div class="xrow"><button class="btn pri" onclick="closeOv();go(\'orders\')">'+t('orders')+'</button>'
+    + '<button class="btn" onclick="closeOv()">'+t('cancel')+'</button></div>';
+}
+async function renderOrders(){
+  var box = document.getElementById('orders');
+  if(!ME){ box.innerHTML = '<div class="empty">'+t('needlogin')+'</div>'; return; }
+  var items = [];
+  try{ items = await api('GET','/api/orders'); }catch(e){}
+  if(!items.length){ box.innerHTML = '<div class="empty">'+t('noorders')+'</div>'; return; }
+  box.innerHTML = items.map(function(o){
+    var st = {pending:['⏳',t('st_pending')],confirmed:['✔️',t('st_confirmed')],paid:['💰',t('st_paid')],rejected:['✖️',t('st_rejected')],done:['✅',t('st_done')],cancelled:['🚫',t('st_cancelled')]}[o.status] || [o.status,o.status];
+    var btns = '';
+    if(ME.role==='vendor'){
+      if(o.status==='pending') btns = '<button class="btn" onclick="setOrder('+o.id+',\'confirmed\')">'+t('doConfirm')+'</button><button class="btn" onclick="setOrder('+o.id+',\'rejected\')">'+t('doReject')+'</button>';
+      else if(o.status==='confirmed') btns = '<button class="btn" onclick="setOrder('+o.id+',\'paid\')">'+t('doPaid')+'</button>';
+      else if(o.status==='paid') btns = '<button class="btn" onclick="setOrder('+o.id+',\'done\')">'+t('doDone')+'</button>';
+    } else if(ME.role==='customer' && o.status==='pending'){
+      btns = '<button class="btn" onclick="setOrder('+o.id+',\'cancelled\')">'+t('doCancel')+'</button>';
+    }
+    return '<div class="inq"><div class="hd"><span><b>'+o.code+'</b> • '+esc(o.businessName)+' • '+esc(o.customerName)+(o.phone?' • '+esc(o.phone):'')+'</span><span>'+new Date(o.createdAt).toLocaleString()+'</span></div>'
+      + '<div>'+st[0]+' '+st[1]+' • '+payLabel(o.method)+(o.amount?' • <b>'+o.amount+' ل.س</b>':'')+'</div>'
+      + (o.address?'<div style="color:var(--mut)">'+esc(o.address)+'</div>':'')
+      + (o.notes?'<div>'+esc(o.notes)+'</div>':'')
+      + (btns?'<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">'+btns+'</div>':'')+'</div>';
+  }).join('');
+}
+async function setOrder(id, st){
+  await api('PATCH','/api/orders/'+id+'/status',{status:st});
+  renderOrders(); load();
+}
 function openBiz(){
+  if(!ME || ME.role!=='vendor'){ openAuth(ME?'register':'login'); alert(t('loginFirst')); return; }
   var opts = CATS.filter(c=>c.id!=='all').map(c=>'<option value="'+c.id+'">'+(LANG==='ar'?c.ar:c.en)+'</option>').join('');
   document.getElementById('modal').innerHTML =
     '<h2>'+t('add')+'</h2><div class="sub">'+t('hsub')+'</div>'
@@ -315,10 +488,165 @@ async function renderInbox(){
     return '<div class="inq'+(q.read?'':' unread')+'"><div class="hd"><span>'+esc(q.businessName)+' • '+esc(q.name)+(q.phone?' • '+esc(q.phone):'')+'</span><span>'+new Date(q.createdAt).toLocaleString()+'</span></div><div>'+esc(q.message)+'</div></div>';
   }).join('') : '<div class="empty">'+t('noinbox')+'</div>';
 }
+function renderProfile(){
+  var box = document.getElementById('profile');
+  if(!ME){ box.innerHTML = '<div class="empty">'+t('needlogin')+'</div>'; return; }
+  box.innerHTML = '<div class="frow"><label>'+t('fullname')+'</label><input id="p-name" value="'+esc(ME.fullName)+'"></div>'
+    + '<div class="frow"><label>'+t('phone')+'</label><input id="p-phone" dir="ltr" value="'+esc(ME.phone)+'"></div>'
+    + '<div class="frow"><label>'+t('model')+'</label><input value="'+ME.role+'" disabled></div>'
+    + '<div class="xrow"><button class="btn pri" onclick="saveProfile()">'+t('saveProfile')+'</button></div>';
+}
+async function saveProfile(){
+  var d = await api('PATCH','/api/users/me',{fullName:document.getElementById('p-name').value.trim(), phone:document.getElementById('p-phone').value.trim()});
+  if(d && d.id){ ME = d; renderAuth(); alert('✅'); } else { alert((d&&d.error)||'!'); }
+}
+function billLabel(b){
+  if(!b || !b.model) return t('none');
+  var m = b.model==='perOp'?t('perOp'):b.model==='monthly'?t('monthly'):t('yearly');
+  var s = b.status==='trial'?t('trial'):b.status==='active'?t('active'):b.status;
+  return m+' • '+s;
+}
+async function renderVendor(){
+  var box = document.getElementById('vendor');
+  if(!ME || ME.role!=='vendor'){ box.innerHTML = '<div class="empty">'+t('loginFirst')+'</div>'; return; }
+  box.innerHTML = '<div class="empty">...</div>';
+  var d = await api('GET','/api/billing/mine');
+  var s = d.settings;
+  box.innerHTML = '<div class="sec-t"><h2>'+t('mybiz')+'</h2><button class="btn pri" onclick="openBiz()">'+t('add')+'</button></div>'
+    + '<div class="grid">' + d.businesses.map(function(b){
+      var bl = b.billing||{};
+      return '<div class="card"><div class="cbody"><h3>'+esc(b.name)+'</h3>'
+        + '<div class="meta">'+t('billing')+': '+billLabel(bl)+'</div>'
+        + ((bl.model==='perOp')?'<div class="meta">'+t('opscount')+': '+(bl.opsCount||0)+' • '+t('opsdue')+': <b>'+(bl.opsDue||0)+' '+s.currency+'</b></div>':'')
+        + (bl.free_trial_used?'<div class="meta">✅ '+t('usedtrial')+'</div>':'')
+        + ((bl.start||bl.end)?'<div class="meta">'+t('start')+': '+(bl.start||'-').slice(0,10)+' • '+t('end')+': '+(bl.end||'-').slice(0,10)+'</div>':'')
+        + '<div class="xrow"><button class="btn" onclick="openBilling('+b.id+')">'+t('billing')+'</button>'
+        + '<button class="btn" onclick="openPaySetup('+b.id+')">'+t('paysetup')+'</button></div>'
+        + '</div></div>';
+    }).join('') + '</div>';
+}
+function openBilling(id){
+  openModalBilling(id);
+}
+async function openModalBilling(id){
+  var d = await api('GET','/api/billing/mine');
+  var b = d.businesses.find(function(x){return x.id===id});
+  var s = d.settings;
+  function modBtn(m, price, per){
+    var en = s.models[m];
+    return '<button class="btn'+(b.billing&&b.billing.model===m?' pri':'')+'" '+(en?'':'disabled')+' onclick="subscribe('+id+',\''+m+'\')">'
+      + (m==='perOp'?t('perOp'):m==='monthly'?t('monthly'):t('yearly'))+' • '+price+' '+s.currency+(per||'')+(en?'':' ✖️')+'</button>';
+  }
+  document.getElementById('modal').innerHTML =
+    '<h2>'+t('billing')+'</h2><div class="sub">'+esc(b.name)+' — '+billLabel(b.billing)+'</div>'
+    + '<div style="display:grid;gap:8px">'
+    + modBtn('perOp', s.perOpPrice, '')
+    + modBtn('monthly', s.monthlyPrice, ' /30')
+    + modBtn('yearly', s.yearlyPrice, ' /365')
+    + '</div>'
+    + '<div class="xrow"><button class="btn" onclick="closeOv()">'+t('cancel')+'</button></div>';
+  document.getElementById('ov').className = 'overlay open';
+}
+async function subscribe(id, model){
+  var r = await api('POST','/api/billing/subscribe',{businessId:id, model:model});
+  if(r && r.billing){ alert('✅'+(r.trial?' ('+t('trial')+')':'')); closeOv(); renderVendor(); }
+  else alert((r&&r.error)||'!');
+}
+async function openPaySetup(id){
+  var cur = await api('GET','/api/businesses/'+id+'/pay');
+  var ms = await getPayM();
+  var rows = ms.map(function(m){
+    var on = cur.accepted.indexOf(m.id)>-1;
+    var det = (cur.details&&cur.details[m.id])||'';
+    return '<label style="display:block;font-size:13px;margin-bottom:8px"><input type="checkbox" data-pm="'+m.id+'" '+(on?'checked':'')+' style="width:auto"> '+(LANG==='ar'?m.ar:m.en)+'<input data-pd="'+m.id+'" value="'+esc(det)+'" placeholder="'+t('paydetails')+'" style="margin-top:4px"></label>';
+  }).join('');
+  document.getElementById('modal').innerHTML =
+    '<h2>'+t('paysetup')+'</h2>'
+    + rows
+    + '<div class="frow"><label>'+t('paylink')+'</label><input id="p-link" dir="ltr" value="'+esc(cur.link||'')+'"></div>'
+    + '<div class="xrow"><button class="btn pri" onclick="savePaySetup('+id+')">'+t('savepay')+'</button>'
+    + '<button class="btn" onclick="closeOv()">'+t('cancel')+'</button></div>';
+  document.getElementById('ov').className = 'overlay open';
+}
+async function savePaySetup(id){
+  var acc = [], det = {};
+  document.querySelectorAll('[data-pm]').forEach(function(c){ if(c.checked) acc.push(c.getAttribute('data-pm')); });
+  document.querySelectorAll('[data-pd]').forEach(function(i){ if(i.value.trim()) det[i.getAttribute('data-pd')] = i.value.trim(); });
+  var r = await api('PATCH','/api/businesses/'+id+'/pay',{accepted:acc, details:det, link:document.getElementById('p-link').value.trim()});
+  if(r && r.accepted){ alert('✅'); closeOv(); } else alert((r&&r.error)||'!');
+}
+function qrImg(text){
+  return '<img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data='+encodeURIComponent(text)+'" alt="QR" style="width:180px;height:180px;border-radius:12px;border:1px solid var(--line)" />';
+}
+async function renderAdmin(){
+  var box = document.getElementById('adminrev');
+  if(!ME || ME.role!=='admin'){ box.innerHTML = '<div class="empty">403</div>'; return; }
+  box.innerHTML = '<div class="empty">...</div>';
+  var r = await api('GET','/api/admin/revenue');
+  var cur = r.currency||'SYP';
+  function stat(l,v){ return '<div class="card"><div class="cbody"><div class="meta">'+l+'</div><h3 style="font-size:22px">'+v+'</h3></div></div>'; }
+  var html = '<div class="grid">'
+    + stat(t('revTotal'), r.totalRevenue+' '+cur)
+    + stat(t('revVendors'), r.totalVendors)
+    + stat(t('revActive'), r.activeStores)
+    + stat(t('revTrial'), r.trialStores)
+    + stat(t('revMonthly'), r.monthlySubs)
+    + stat(t('revYearly'), r.yearlySubs)
+    + stat(t('revOps'), r.paidOps)
+    + stat(t('revMonth'), r.monthlyRevenue+' '+cur)
+    + stat(t('revYear'), r.yearlyRevenue+' '+cur)
+    + stat(t('revPerOp'), r.perOpRevenue+' '+cur)
+    + '</div>';
+  html += '<div class="sec-t"><h2>'+t('revExp')+'</h2></div><div class="inbox">'
+    + (r.expiringSoon.length ? r.expiringSoon.map(function(x){return '<div class="inq"><div class="hd"><span>'+esc(x.business)+' • '+x.model+'</span><span>'+String(x.end).slice(0,10)+'</span></div></div>'}).join('') : '<div class="empty">-</div>') + '</div>';
+  html += '<div class="sec-t"><h2>'+t('revPrices')+'</h2></div><div class="inbox" style="padding:14px">'
+    + '<div class="mrow"><div class="frow"><label>'+t('opPrice')+' ('+cur+')</label><input id="s-perop" type="number" min="0"></div>'
+    + '<div class="frow"><label>'+t('monthPrice')+' ('+cur+')</label><input id="s-month" type="number" min="0"></div></div>'
+    + '<div class="mrow"><div class="frow"><label>'+t('yearPrice')+' ('+cur+')</label><input id="s-year" type="number" min="0"></div>'
+    + '<div class="frow"><label>'+t('trialDays')+'</label><input id="s-trial" type="number" min="0"></div></div>'
+    + '<div class="frow"><label>'+t('enableMods')+'</label><div>'
+    + '<label style="margin-inline-end:10px"><input type="checkbox" id="s-m-perop" style="width:auto"> '+t('perOp')+'</label>'
+    + '<label style="margin-inline-end:10px"><input type="checkbox" id="s-m-monthly" style="width:auto"> '+t('monthly')+'</label>'
+    + '<label><input type="checkbox" id="s-m-yearly" style="width:auto"> '+t('yearly')+'</label>'
+    + '</div></div>'
+    + '<div class="xrow"><button class="btn pri" onclick="saveSettings()">'+t('saveSettings')+'</button></div></div>';
+  html += '<div class="sec-t"><h2>'+t('revVendorsL')+'</h2></div><div class="inbox" id="admin-vendors"></div>';
+  html += '<div class="sec-t"><h2>'+t('revLedger')+'</h2></div><div class="inbox" id="admin-ledger"></div>';
+  box.innerHTML = html;
+  var s = await api('GET','/api/admin/settings');
+  document.getElementById('s-perop').value = s.perOpPrice;
+  document.getElementById('s-month').value = s.monthlyPrice;
+  document.getElementById('s-year').value = s.yearlyPrice;
+  document.getElementById('s-trial').value = s.trialDays;
+  document.getElementById('s-m-perop').checked = !!s.models.perOp;
+  document.getElementById('s-m-monthly').checked = !!s.models.monthly;
+  document.getElementById('s-m-yearly').checked = !!s.models.yearly;
+  var vs = await api('GET','/api/admin/vendors');
+  var vhtml = '';
+  vs.forEach(function(v){
+    var snames = v.stores.map(function(x){ return esc(x.name); }).join(' | ');
+    vhtml += '<div class="inq"><div class="hd"><span>'+esc(v.fullName)+'</span> <span dir="ltr">'+esc(v.phone)+'</span></div><div>'+snames+'</div></div>';
+  });
+  document.getElementById('admin-vendors').innerHTML = vs.length ? vhtml : '<div class="empty">-</div>';
+  var lg = await api('GET','/api/admin/ledger');
+  document.getElementById('admin-ledger').innerHTML = lg.length ? lg.map(function(x){
+    return '<div class="inq"><div class="hd"><span>#'+x.id+' • '+x.transaction_type+' • <b>'+x.amount+' '+x.currency+'</b></span><span>'+String(x.created_at).slice(0,16).replace('T',' ')+'</span></div><div style="color:var(--mut)">vendor:'+x.vendor_id+' • store:'+(x.business_id||'-')+' • '+x.status+' • '+esc(x.reference)+'</div></div>';
+  }).join('') : '<div class="empty">-</div>';
+}
+async function saveSettings(){
+  var r = await api('PATCH','/api/admin/settings',{
+    perOpPrice:Number(document.getElementById('s-perop').value),
+    monthlyPrice:Number(document.getElementById('s-month').value),
+    yearlyPrice:Number(document.getElementById('s-year').value),
+    trialDays:Number(document.getElementById('s-trial').value),
+    models:{perOp:document.getElementById('s-m-perop').checked, monthly:document.getElementById('s-m-monthly').checked, yearly:document.getElementById('s-m-yearly').checked}
+  });
+  if(r && r.currency!==undefined){ alert('✅'); renderAdmin(); } else alert((r&&r.error)||'!');
+}
 function closeOv(){ document.getElementById('ov').className = 'overlay'; }
 document.getElementById('ov').addEventListener('click', function(e){ if(e.target===this) closeOv(); });
 
-setLang(LANG); load();
+setLang(LANG); refreshMe(); load();
 </script>
 </body>
 </html>

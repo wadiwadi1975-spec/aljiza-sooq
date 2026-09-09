@@ -1,7 +1,31 @@
+const crypto = require('crypto');
 let _idSeq = 100;
 function nextId() { return ++_idSeq; }
+function genSalt() { return crypto.randomBytes(8).toString('hex'); }
+function hashPw(password, salt) { return crypto.createHash('sha256').update(salt + '::' + password).digest('hex'); }
+function newToken() { return 'sooq_' + crypto.randomBytes(16).toString('hex'); }
+// Store identity key for once-only free trial (survives account delete/recreate)
+function storeKey(name, phone) {
+  return crypto.createHash('sha256').update(String(name || '').trim() + '||' + String(phone || '').replace(/\D/g, '')).digest('hex');
+}
 
+const _adminSalt = genSalt();
 const db = {
+  users: [
+    { id: 'u-admin', fullName: 'مدير المنصة', phone: '0999999999', salt: _adminSalt, passHash: hashPw('admin123', _adminSalt), role: 'admin', createdAt: new Date().toISOString() }
+  ],
+  sessions: {}, // token -> { userId, createdAt }
+  settings: {
+    currency: 'SYP',
+    perOpPrice: 5000,
+    monthlyPrice: 50000,
+    yearlyPrice: 500000,
+    trialDays: 30,
+    models: { perOp: true, monthly: true, yearly: true }
+  },
+  ledger: [], // platform money ONLY (vendor -> platform). NEVER customer order amounts.
+  trials: [], // { key, businessId, usedAt } — once-only free trial registry
+  subscriptions: [],
   businesses: [
     { id: 1, name: 'مطعم البيت الدمشقي', nameEn: 'Damascus House Restaurant', category: 'food', phone: '01001234567', whatsapp: '01001234567', address: 'شارع الهرم، الجيزة', addressEn: 'Haram St, Giza', description: 'أشهى المأكولات الشامية والمشويات على الفحم', descriptionEn: 'Tasty levantine dishes & charcoal grills', image: '', featured: true, rating: 4.8, createdAt: new Date().toISOString() },
     { id: 2, name: 'صيدلية الشفاء', nameEn: 'Al-Shifa Pharmacy', category: 'health', phone: '01007654321', whatsapp: '01007654321', address: 'ميدان الجيزة', addressEn: 'Giza Square', description: 'توصيل الأدوية للمنازل على مدار الساعة', descriptionEn: '24/7 home medicine delivery', image: '', featured: true, rating: 4.9, createdAt: new Date().toISOString() },
@@ -29,7 +53,18 @@ const db = {
   ],
   inquiries: [
     { id: 1, businessId: 1, name: 'زائر تجريبي', phone: '01000000000', message: 'هل يوجد توصيل للمهندسين؟', createdAt: new Date().toISOString(), read: false }
+  ],
+  orders: [
+    { id: 1, code: 'JZQ-1001', businessId: 1, customerName: 'زبون تجريبي', phone: '0955000000', address: 'دمشق - المزة', notes: 'وجبتان مشكل', method: 'cash', amount: 150000, status: 'pending', createdAt: new Date().toISOString() }
+  ],
+  payMethods: [
+    { id: 'cash', ar: '💵 كاش (نقدي)', en: '💵 Cash' },
+    { id: 'sham', ar: '💠 شام كاش', en: '💠 Sham Cash' },
+    { id: 'syriatel', ar: '📱 سيريتل كاش', en: '📱 Syriatel Cash' },
+    { id: 'mtn', ar: '📱 MTN كاش', en: '📱 MTN Cash' },
+    { id: 'bank', ar: '🏦 تحويل بنكي', en: '🏦 Bank Transfer' },
+    { id: 'hawala', ar: '💸 حوالة', en: '💸 Hawala' }
   ]
 };
 
-module.exports = { db, nextId };
+module.exports = { db, nextId, genSalt, hashPw, newToken, storeKey };

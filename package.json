@@ -4,7 +4,8 @@
   "description": "AL-JIZA SOOQ.COM — marketing bridge between businesses and the public",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "check": "node --check api/index.js && node --check api/db.js && node --check server.js && echo CHECK-OK"
   },
   "engines": {
     "node": ">=18"
