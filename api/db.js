@@ -1,18 +1,25 @@
 const crypto = require('crypto');
+const bcrypt = require('bcryptjs');
 let _idSeq = 100;
 function nextId() { return ++_idSeq; }
+// Passwords: bcrypt only (SHA-256 retired). Cost 10.
+function hashPw(password) { return bcrypt.hashSync(String(password), 10); }
+function checkPw(password, h) {
+  try { return bcrypt.compareSync(String(password), h); } catch (e) { return false; }
+}
 function genSalt() { return crypto.randomBytes(8).toString('hex'); }
-function hashPw(password, salt) { return crypto.createHash('sha256').update(salt + '::' + password).digest('hex'); }
 function newToken() { return 'sooq_' + crypto.randomBytes(16).toString('hex'); }
 // Store identity key for once-only free trial (survives account delete/recreate)
 function storeKey(name, phone) {
   return crypto.createHash('sha256').update(String(name || '').trim() + '||' + String(phone || '').replace(/\D/g, '')).digest('hex');
 }
 
-const _adminSalt = genSalt();
+const _adminPhone = process.env.ADMIN_PHONE || '0999999999';
+const _adminPass = process.env.ADMIN_PASSWORD || ('Tmp-' + crypto.randomBytes(6).toString('hex') + '!');
+if (!process.env.ADMIN_PASSWORD) console.log('[sooq] ADMIN_PASSWORD not set - using random bootstrap password for 0999999999');
 const db = {
   users: [
-    { id: 'u-admin', fullName: 'مدير المنصة', phone: '0999999999', salt: _adminSalt, passHash: hashPw('admin123', _adminSalt), role: 'admin', createdAt: new Date().toISOString() }
+    { id: 'u-admin', fullName: 'مدير المنصة', phone: _adminPhone, passHash: hashPw(_adminPass), algo: 'bcrypt', role: 'admin', createdAt: new Date().toISOString() }
   ],
   sessions: {}, // token -> { userId, createdAt }
   settings: {
@@ -67,4 +74,4 @@ const db = {
   ]
 };
 
-module.exports = { db, nextId, genSalt, hashPw, newToken, storeKey };
+module.exports = { db, nextId, genSalt, hashPw, checkPw, newToken, storeKey };

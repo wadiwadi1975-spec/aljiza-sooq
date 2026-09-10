@@ -1,13 +1,28 @@
-const { db, nextId, genSalt, hashPw, newToken, storeKey } = require('./db');
+const { db, nextId, hashPw, checkPw, newToken, storeKey } = require('./db');
 
-function cors(res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+const ALLOWED_ORIGINS = ['https://aljiza-sooq.vercel.app'];
+function isAllowedOrigin(o) {
+  if (!o) return false;
+  try {
+    const u = new URL(o);
+    if (ALLOWED_ORIGINS.includes(u.origin)) return true;
+    if (u.hostname === 'localhost' || u.hostname === '127.0.0.1') return true;
+    if (u.hostname.endsWith('.vercel.app')) return true; // preview deployments
+    return false;
+  } catch (e) { return false; }
+}
+function cors(req, res) {
+  const o = (req.headers && (req.headers.origin || req.headers.Origin)) || null;
+  if (o && isAllowedOrigin(o)) {
+    res.setHeader('Access-Control-Allow-Origin', o);
+    res.setHeader('Vary', 'Origin');
+  }
+  // same-origin / non-browser (no Origin): no header needed
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PATCH,DELETE,OPTIONS');
 }
 
 function json(res, status, data) {
-  cors(res);
   res.status(status).json(data);
 }
 
@@ -49,7 +64,7 @@ function ownsBusiness(u, b) {
 // Amounts ALWAYS come from db.settings — never from client input.
 
 module.exports = async (req, res) => {
-  cors(res);
+  cors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   const url = req.url.split('?')[0];
@@ -70,8 +85,7 @@ module.exports = async (req, res) => {
       return json(res, 400, { error: 'fullName, phone & password required' });
     if (db.users.find(u => u.phone === phone))
       return json(res, 409, { error: 'phone registered' });
-    const salt = genSalt();
-    const user = { id: 'u' + nextId(), fullName, phone, salt, passHash: hashPw(password, salt), role, createdAt: new Date().toISOString() };
+    const user = { id: 'u' + nextId(), fullName, phone, passHash: hashPw(password), algo: 'bcrypt', role, createdAt: new Date().toISOString() };
     db.users.push(user);
     const token = newToken();
     db.sessions[token] = { userId: user.id, createdAt: new Date().toISOString() };
@@ -82,7 +96,7 @@ module.exports = async (req, res) => {
     const phone = String(body.phone || '').replace(/\D/g, '');
     const password = String(body.password || '');
     const user = db.users.find(u => u.phone === phone);
-    if (!user || user.passHash !== hashPw(password, user.salt))
+    if (!user || !checkPw(password, user.passHash))
       return json(res, 401, { error: 'bad credentials' });
     const token = newToken();
     db.sessions[token] = { userId: user.id, createdAt: new Date().toISOString() };
@@ -309,7 +323,10 @@ module.exports = async (req, res) => {
       id, code: 'JZQ-' + (1000 + id), businessId: body.businessId,
       customerName: body.customerName, userId: me ? me.id : null,
       phone: String(body.phone), address: body.address || '', notes: body.notes || '',
-      method: body.method || 'cash', amount: Number(body.amount) || 0,
+      // Amount integrity: client value is ONLY a customer-declared estimate.
+      // Final amount is set by the VENDOR (price authority) on confirm. Never in ledger.
+      method: body.method || 'cash', amount: Math.max(0, Math.floor(Number(body.amount)) || 0),
+      declaredAmount: Math.max(0, Math.floor(Number(body.amount)) || 0), confirmedAmount: null,
       status: 'pending', createdAt: new Date().toISOString()
     };
     db.orders.push(o);
@@ -326,14 +343,30 @@ module.exports = async (req, res) => {
     const isVendor = biz && ownsBusiness(me, biz);
     const isCustomer = (o.userId && String(o.userId) === String(me.id)) || (!o.userId && o.phone === me.phone);
     if (me.role === 'admin') return json(res, 403, { error: 'admin is not a party to customer payments' });
-    if (isVendor && ['confirmed', 'paid', 'done', 'rejected'].includes(st)) { o.status = st; return json(res, 200, o); }
+    if (isVendor && ['confirmed', 'paid', 'done', 'rejected'].includes(st)) {
+      o.status = st;
+      if (st === 'confirmed') {
+        const ca = Math.floor(Number((body || {}).confirmedAmount));
+        o.confirmedAmount = (ca >= 0 && isFinite(ca)) ? ca : (o.declaredAmount || o.amount || 0);
+      }
+      return json(res, 200, o);
+    }
     if (isCustomer && st === 'cancelled' && o.status === 'pending') { o.status = 'cancelled'; return json(res, 200, o); }
     return json(res, 403, { error: 'forbidden' });
   }
 
-  // ---------- inquiries (unchanged public contact) ----------
+  // ---------- inquiries: scoped by ownership (vendor: own stores; customer: own; admin: all) ----------
   if (url === '/api/inquiries' && method === 'GET') {
-    const items = db.inquiries.map(q => {
+    const me = authUser(req);
+    if (!me) return json(res, 403, { error: 'auth required' });
+    let list = db.inquiries;
+    if (me.role === 'vendor') {
+      const mine = new Set(db.businesses.filter(b => ownsBusiness(me, b)).map(b => String(b.id)));
+      list = list.filter(q => mine.has(String(q.businessId)));
+    } else if (me.role === 'customer') {
+      list = list.filter(q => (q.userId && String(q.userId) === String(me.id)) || (!q.userId && q.phone === me.phone));
+    }
+    const items = list.map(q => {
       const biz = db.businesses.find(x => String(x.id) === String(q.businessId)) || null;
       return { ...q, businessName: biz ? biz.name : '' };
     }).reverse();
@@ -341,14 +374,20 @@ module.exports = async (req, res) => {
   }
   if (url === '/api/inquiries' && method === 'POST') {
     if (!body.businessId || !body.name || !body.message) return json(res, 400, { error: 'businessId, name & message required' });
-    const q = { id: nextId(), businessId: body.businessId, name: body.name, phone: body.phone || '', message: body.message, createdAt: new Date().toISOString(), read: false };
+    const me = authUser(req);
+    const q = { id: nextId(), businessId: body.businessId, name: body.name, phone: body.phone || '', userId: me ? me.id : null, message: body.message, createdAt: new Date().toISOString(), read: false };
     db.inquiries.push(q);
     return json(res, 201, q);
   }
   const qRead = url.match(/^\/api\/inquiries\/(.+)\/read$/);
   if (qRead && method === 'POST') {
+    const me = needAuth(req, res);
+    if (!me) return;
     const q = db.inquiries.find(x => String(x.id) === String(qRead[1]));
     if (!q) return json(res, 404, { error: 'not found' });
+    const biz = db.businesses.find(x => String(x.id) === String(q.businessId));
+    const mine = me.role === 'admin' || (biz && ownsBusiness(me, biz)) || (q.userId && String(q.userId) === String(me.id));
+    if (!mine) return json(res, 403, { error: 'forbidden' });
     q.read = true;
     return json(res, 200, q);
   }
