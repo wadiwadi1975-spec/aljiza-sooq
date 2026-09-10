@@ -1,4 +1,4 @@
-const { db, nextId, hashPw, checkPw, newToken, storeKey } = require('./db');
+const { pool, getDb, hashPw, checkPw, newToken, storeKey } = require('./db');
 
 const ALLOWED_ORIGINS = ['https://aljiza-sooq.vercel.app'];
 function isAllowedOrigin(o) {
@@ -7,7 +7,7 @@ function isAllowedOrigin(o) {
     const u = new URL(o);
     if (ALLOWED_ORIGINS.includes(u.origin)) return true;
     if (u.hostname === 'localhost' || u.hostname === '127.0.0.1') return true;
-    if (u.hostname.endsWith('.vercel.app')) return true; // preview deployments
+    if (u.hostname.endsWith('.vercel.app')) return true;
     return false;
   } catch (e) { return false; }
 }
@@ -17,53 +17,50 @@ function cors(req, res) {
     res.setHeader('Access-Control-Allow-Origin', o);
     res.setHeader('Vary', 'Origin');
   }
-  // same-origin / non-browser (no Origin): no header needed
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PATCH,DELETE,OPTIONS');
 }
 
-function json(res, status, data) {
-  res.status(status).json(data);
-}
+function json(res, status, data) { res.status(status).json(data); }
 
-// ---------- auth helpers (server-side sessions, roles enforced here) ----------
+// ---- auth helpers ----
 function bearer(req) {
   const h = req.headers.authorization || req.headers.Authorization;
   if (!h || !h.startsWith('Bearer ')) return null;
   return h.slice(7);
 }
-function authUser(req) {
-  const t = bearer(req);
-  if (!t) return null;
-  const s = db.sessions[t];
-  if (!s) return null;
-  return db.users.find(u => u.id === s.userId) || null;
-}
 function safeUser(u) {
   if (!u) return null;
-  const { passHash, salt, ...safe } = u;
+  const { pass_hash, salt, ...safe } = u;
+  safe.fullName = safe.full_name || safe.fullName;
+  delete safe.full_name;
   return safe;
 }
-function needAuth(req, res) {
-  const u = authUser(req);
+async function authUser(req) {
+  const t = bearer(req);
+  if (!t) return null;
+  const { rows } = await pool.query('SELECT u.* FROM sessions s JOIN users u ON s.user_id = u.id WHERE s.token = $1', [t]);
+  return rows[0] || null;
+}
+async function needAuth(req, res) {
+  const u = await authUser(req);
   if (!u) { json(res, 401, { error: 'auth required' }); return null; }
   return u;
 }
-function needRole(req, res, roles) {
-  const u = needAuth(req, res);
+async function needRole(req, res, roles) {
+  const u = await needAuth(req, res);
   if (!u) return null;
   if (!roles.includes(u.role)) { json(res, 403, { error: 'forbidden' }); return null; }
   return u;
 }
-function ownsBusiness(u, b) {
+async function ownsBusiness(u, b) {
   if (!u || !b) return false;
   if (u.role === 'admin') return true;
-  return b.ownerId && String(b.ownerId) === String(u.id);
+  return b.owner_id && String(b.owner_id) === String(u.id);
 }
-// NOTE: all money math below runs synchronously in one tick (atomic, single-threaded).
-// Amounts ALWAYS come from db.settings — never from client input.
 
 module.exports = async (req, res) => {
+  await getDb(); // ensure schema + seed
   cors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
 
@@ -74,8 +71,7 @@ module.exports = async (req, res) => {
   // Health
   if (url === '/api/healthz' && method === 'GET') return json(res, 200, { ok: true });
 
-  // ---------- 1) Customer accounts ----------
-  // Register (first time only): fullName + phone + password
+  // ---- auth: register ----
   if (url === '/api/auth/register' && method === 'POST') {
     const fullName = String(body.fullName || '').trim();
     const phone = String(body.phone || '').replace(/\D/g, '');
@@ -83,196 +79,245 @@ module.exports = async (req, res) => {
     const role = body.role === 'vendor' ? 'vendor' : 'customer';
     if (fullName.length < 3 || phone.length < 7 || password.length < 4)
       return json(res, 400, { error: 'fullName, phone & password required' });
-    if (db.users.find(u => u.phone === phone))
-      return json(res, 409, { error: 'phone registered' });
-    const user = { id: 'u' + nextId(), fullName, phone, passHash: hashPw(password), algo: 'bcrypt', role, createdAt: new Date().toISOString() };
-    db.users.push(user);
+    const { rows: existing } = await pool.query('SELECT id FROM users WHERE phone = $1', [phone]);
+    if (existing.length) return json(res, 409, { error: 'phone registered' });
+    const { rows: [user] } = await pool.query(
+      'INSERT INTO users (full_name, phone, pass_hash, role) VALUES ($1,$2,$3,$4) RETURNING *',
+      [fullName, phone, hashPw(password), role]
+    );
     const token = newToken();
-    db.sessions[token] = { userId: user.id, createdAt: new Date().toISOString() };
+    await pool.query('INSERT INTO sessions (token, user_id) VALUES ($1,$2)', [token, user.id]);
     return json(res, 201, { accessToken: token, user: safeUser(user) });
   }
-  // Login (phone + password only — name/phone NOT asked again)
+
+  // ---- auth: login ----
   if (url === '/api/auth/login' && method === 'POST') {
     const phone = String(body.phone || '').replace(/\D/g, '');
     const password = String(body.password || '');
-    const user = db.users.find(u => u.phone === phone);
-    if (!user || !checkPw(password, user.passHash))
+    const { rows } = await pool.query('SELECT * FROM users WHERE phone = $1', [phone]);
+    const user = rows[0];
+    if (!user || !checkPw(password, user.pass_hash))
       return json(res, 401, { error: 'bad credentials' });
     const token = newToken();
-    db.sessions[token] = { userId: user.id, createdAt: new Date().toISOString() };
+    await pool.query('INSERT INTO sessions (token, user_id) VALUES ($1,$2)', [token, user.id]);
     return json(res, 200, { accessToken: token, user: safeUser(user) });
   }
+
+  // ---- auth: me ----
   if (url === '/api/auth/me' && method === 'GET') {
-    const u = authUser(req);
+    const u = await authUser(req);
     if (!u) return json(res, 401, { error: 'auth required' });
     return json(res, 200, safeUser(u));
   }
+
+  // ---- auth: logout ----
   if (url === '/api/auth/logout' && method === 'POST') {
     const t = bearer(req);
-    if (t) delete db.sessions[t];
+    if (t) await pool.query('DELETE FROM sessions WHERE token = $1', [t]);
     return json(res, 200, { ok: true });
   }
-  // Edit own profile (name/phone)
+
+  // ---- edit profile ----
   if (url === '/api/users/me' && method === 'PATCH') {
-    const u = needAuth(req, res);
+    const u = await needAuth(req, res);
     if (!u) return;
-    if (body.fullName && String(body.fullName).trim().length >= 3) u.fullName = String(body.fullName).trim();
+    const updates = [], params = [];
+    let i = 1;
+    if (body.fullName && String(body.fullName).trim().length >= 3) {
+      updates.push(`full_name = $${i++}`); params.push(String(body.fullName).trim());
+    }
     if (body.phone) {
       const ph = String(body.phone).replace(/\D/g, '');
-      if (ph.length >= 7 && !db.users.find(x => x.id !== u.id && x.phone === ph)) u.phone = ph;
+      if (ph.length >= 7) {
+        const { rows: dup } = await pool.query('SELECT id FROM users WHERE phone = $1 AND id != $2', [ph, u.id]);
+        if (!dup.length) { updates.push(`phone = $${i++}`); params.push(ph); }
+      }
+    }
+    if (updates.length) {
+      params.push(u.id);
+      const { rows: [updated] } = await pool.query(`UPDATE users SET ${updates.join(', ')} WHERE id = $${i} RETURNING *`, params);
+      return json(res, 200, safeUser(updated));
     }
     return json(res, 200, safeUser(u));
   }
 
-  // ---------- payment methods catalog (Syria, incl. cash) ----------
-  if (url === '/api/pay-methods' && method === 'GET') return json(res, 200, db.payMethods);
-
-  // ---------- businesses ----------
-  if (url === '/api/businesses' && method === 'GET') {
-    const me = authUser(req);
-    return json(res, 200, db.businesses.map(v => {
-      const pub = { ...v };
-      if (!me || !(me.role === 'admin' || ownsBusiness(me, v))) delete pub.billing;
-      return pub;
-    }));
+  // ---- pay methods ----
+  if (url === '/api/pay-methods' && method === 'GET') {
+    const { rows } = await pool.query('SELECT * FROM pay_methods');
+    return json(res, 200, rows);
   }
+
+  // ---- businesses ----
+  if (url === '/api/businesses' && method === 'GET') {
+    const me = await authUser(req);
+    const { rows } = await pool.query('SELECT * FROM businesses ORDER BY featured DESC, rating DESC');
+    const result = [];
+    for (const v of rows) {
+      const pub = { ...v };
+      if (!me || !(me.role === 'admin' || await ownsBusiness(me, v))) delete pub.billing;
+      result.push(pub);
+    }
+    return json(res, 200, result);
+  }
+
   if (url === '/api/businesses' && method === 'POST') {
     if (!body.name || !body.phone) return json(res, 400, { error: 'name & phone required' });
-    const me = authUser(req);
-    const biz = {
-      id: nextId(),
-      ownerId: me && me.role === 'vendor' ? me.id : null,
-      name: body.name, nameEn: body.nameEn || '',
-      category: body.category || 'other',
-      phone: body.phone, whatsapp: body.whatsapp || body.phone,
-      address: body.address || '', addressEn: body.addressEn || '',
-      description: body.description || '', descriptionEn: body.descriptionEn || '',
-      image: body.image || '', images: Array.isArray(body.images) ? body.images.slice(0, 3) : [],
-      featured: false, rating: 5.0,
-      paySetup: { accepted: ['cash'], details: {}, link: '' },
-      billing: { model: null, status: 'none', start: null, end: null, free_trial_used: false, free_trial_start: null, free_trial_end: null, opsCount: 0, opsDue: 0 },
-      createdAt: new Date().toISOString()
-    };
-    db.businesses.push(biz);
-    // Billable op: listing creation (per-op model only, server-priced)
-    if (biz.ownerId) chargeOp(biz.ownerId, biz.id, 'listing');
+    const me = await authUser(req);
+    const ownerId = me && me.role === 'vendor' ? me.id : null;
+    const { rows: [biz] } = await pool.query(
+      `INSERT INTO businesses (owner_id, name, name_en, category, phone, whatsapp, address, address_en, description, description_en, image, images)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING *`,
+      [ownerId, body.name, body.nameEn || '', body.category || 'other', body.phone, body.whatsapp || body.phone,
+       body.address || '', body.addressEn || '', body.description || '', body.descriptionEn || '',
+       body.image || '', JSON.stringify(Array.isArray(body.images) ? body.images.slice(0, 3) : [])]
+    );
+    if (ownerId) await chargeOp(ownerId, biz.id, 'listing');
     return json(res, 201, biz);
   }
+
+  // ---- business pay ----
   const bPayGet = url.match(/^\/api\/businesses\/(.+)\/pay$/);
   if (bPayGet && method === 'GET') {
-    const b = db.businesses.find(x => String(x.id) === String(bPayGet[1]));
-    if (!b) return json(res, 404, { error: 'not found' });
-    return json(res, 200, b.paySetup || { accepted: ['cash'], details: {}, link: '' });
+    const { rows } = await pool.query('SELECT pay_setup FROM businesses WHERE id = $1', [bPayGet[1]]);
+    if (!rows.length) return json(res, 404, { error: 'not found' });
+    return json(res, 200, rows[0].pay_setup || { accepted: ['cash'], details: {}, link: '' });
   }
   if (bPayGet && method === 'PATCH') {
-    const me = needRole(req, res, ['vendor', 'admin']);
+    const me = await needRole(req, res, ['vendor', 'admin']);
     if (!me) return;
-    const b = db.businesses.find(x => String(x.id) === String(bPayGet[1]));
-    if (!b) return json(res, 404, { error: 'not found' });
-    if (!b.ownerId && me.role === 'vendor') b.ownerId = me.id; // claim unowned legacy listing
-    if (!ownsBusiness(me, b)) return json(res, 403, { error: 'not your store' });
-    const valid = db.payMethods.map(m => m.id);
-    const acc = Array.isArray(body.accepted) ? body.accepted.filter(a => valid.includes(a)) : b.paySetup.accepted;
-    // NOTE: no card/bank sensitive data is stored — only vendor-published details/link text.
-    b.paySetup = {
+    const { rows } = await pool.query('SELECT * FROM businesses WHERE id = $1', [bPayGet[1]]);
+    if (!rows.length) return json(res, 404, { error: 'not found' });
+    const b = rows[0];
+    if (!b.owner_id && me.role === 'vendor') {
+      await pool.query('UPDATE businesses SET owner_id = $1 WHERE id = $2', [me.id, b.id]);
+      b.owner_id = me.id;
+    }
+    if (!await ownsBusiness(me, b)) return json(res, 403, { error: 'not your store' });
+    const { rows: pmRows } = await pool.query('SELECT id FROM pay_methods');
+    const valid = pmRows.map(m => m.id);
+    const acc = Array.isArray(body.accepted) ? body.accepted.filter(a => valid.includes(a)) : (b.pay_setup?.accepted || ['cash']);
+    const newSetup = {
       accepted: acc.length ? acc : ['cash'],
-      details: (body.details && typeof body.details === 'object') ? body.details : (b.paySetup.details || {}),
-      link: typeof body.link === 'string' ? body.link.slice(0, 500) : (b.paySetup.link || '')
+      details: (body.details && typeof body.details === 'object') ? body.details : (b.pay_setup?.details || {}),
+      link: typeof body.link === 'string' ? body.link.slice(0, 500) : (b.pay_setup?.link || '')
     };
-    return json(res, 200, b.paySetup);
+    await pool.query('UPDATE businesses SET pay_setup = $1 WHERE id = $2', [JSON.stringify(newSetup), b.id]);
+    return json(res, 200, newSetup);
   }
+
+  // ---- business images ----
   const bImg = url.match(/^\/api\/businesses\/(.+)\/images$/);
   if (bImg && method === 'POST') {
-    const me = needRole(req, res, ['vendor', 'admin']);
+    const me = await needRole(req, res, ['vendor', 'admin']);
     if (!me) return;
-    const b = db.businesses.find(x => String(x.id) === String(bImg[1]));
-    if (!b) return json(res, 404, { error: 'not found' });
-    if (!ownsBusiness(me, b)) return json(res, 403, { error: 'not your store' });
+    const { rows } = await pool.query('SELECT * FROM businesses WHERE id = $1', [bImg[1]]);
+    if (!rows.length) return json(res, 404, { error: 'not found' });
+    const b = rows[0];
+    if (!await ownsBusiness(me, b)) return json(res, 403, { error: 'not your store' });
     const imgs = Array.isArray(body.images) ? body.images.slice(0, 3) : [];
-    b.images = imgs;
-    if (imgs.length) b.image = imgs[0];
-    if (me.role === 'vendor') chargeOp(me.id, b.id, 'images');
-    return json(res, 200, { images: b.images });
+    await pool.query('UPDATE businesses SET images = $1, image = $2 WHERE id = $3', [JSON.stringify(imgs), imgs[0] || '', b.id]);
+    if (me.role === 'vendor') await chargeOp(me.id, b.id, 'images');
+    return json(res, 200, { images: imgs });
   }
+
+  // ---- business delete ----
   const bDel = url.match(/^\/api\/businesses\/(.+)$/);
   if (bDel && method === 'DELETE') {
-    const me = needAuth(req, res);
+    const me = await needAuth(req, res);
     if (!me) return;
-    const b = db.businesses.find(x => String(x.id) === String(bDel[1]));
-    if (!b) return json(res, 404, { error: 'not found' });
-    if (!ownsBusiness(me, b)) return json(res, 403, { error: 'forbidden' });
-    db.businesses = db.businesses.filter(x => String(x.id) !== String(bDel[1]));
+    const { rows } = await pool.query('SELECT * FROM businesses WHERE id = $1', [bDel[1]]);
+    if (!rows.length) return json(res, 404, { error: 'not found' });
+    if (!await ownsBusiness(me, rows[0])) return json(res, 403, { error: 'forbidden' });
+    await pool.query('DELETE FROM businesses WHERE id = $1', [bDel[1]]);
     return json(res, 200, { ok: true });
   }
 
-  // ---------- 5/6/7) vendor billing: trial-once + subscriptions + per-op ----------
+  // ---- billing ----
   if (url === '/api/billing/mine' && method === 'GET') {
-    const me = needRole(req, res, ['vendor', 'admin']);
+    const me = await needRole(req, res, ['vendor', 'admin']);
     if (!me) return;
-    const mine = db.businesses.filter(b => me.role === 'admin' || ownsBusiness(me, b));
-    return json(res, 200, { settings: publicSettings(), businesses: mine.map(b => ({ id: b.id, name: b.name, phone: b.phone, billing: b.billing || null })) });
+    const { rows: s } = await pool.query('SELECT value FROM settings WHERE key = $1', ['platform']);
+    const settings = s[0]?.value || {};
+    const where = me.role === 'admin' ? '' : 'WHERE owner_id = $1';
+    const params = me.role === 'admin' ? [] : [me.id];
+    const { rows: mine } = await pool.query(`SELECT id, name, phone, billing FROM businesses ${where}`, params);
+    return json(res, 200, { settings, businesses: mine });
   }
+
   if (url === '/api/billing/subscribe' && method === 'POST') {
-    const me = needRole(req, res, ['vendor']);
+    const me = await needRole(req, res, ['vendor']);
     if (!me) return;
-    const b = db.businesses.find(x => String(x.id) === String(body.businessId));
-    if (!b) return json(res, 404, { error: 'not found' });
-    if (!b.ownerId) b.ownerId = me.id;
-    if (!ownsBusiness(me, b)) return json(res, 403, { error: 'not your store' });
+    const { rows } = await pool.query('SELECT * FROM businesses WHERE id = $1', [body.businessId]);
+    if (!rows.length) return json(res, 404, { error: 'not found' });
+    const b = rows[0];
+    if (!b.owner_id) { await pool.query('UPDATE businesses SET owner_id = $1 WHERE id = $2', [me.id, b.id]); b.owner_id = me.id; }
+    if (!await ownsBusiness(me, b)) return json(res, 403, { error: 'not your store' });
     const model = body.model;
     if (!['perOp', 'monthly', 'yearly'].includes(model)) return json(res, 400, { error: 'bad model' });
-    if (!db.settings.models[{ perOp: 'perOp', monthly: 'monthly', yearly: 'yearly' }[model]])
-      return json(res, 400, { error: 'model disabled' });
+    const { rows: s } = await pool.query('SELECT value FROM settings WHERE key = $1', ['platform']);
+    const settings = s[0]?.value || {};
+    if (!settings.models?.[model]) return json(res, 400, { error: 'model disabled' });
+
     const now = new Date();
-    b.billing = b.billing || freshBilling();
+    let billing = b.billing || { model: null, status: 'none', start: null, end: null, free_trial_used: false, free_trial_start: null, free_trial_end: null, opsCount: 0, opsDue: 0 };
+
     if (model === 'perOp') {
-      b.billing.model = 'perOp';
-      b.billing.status = 'active';
-      chargeOp(me.id, b.id, 'listing'); // listing fee, server-priced
-      return json(res, 200, { billing: b.billing });
+      billing.model = 'perOp'; billing.status = 'active';
+      await pool.query('UPDATE businesses SET billing = $1 WHERE id = $2', [JSON.stringify(billing), b.id]);
+      await chargeOp(me.id, b.id, 'listing');
+      return json(res, 200, { billing });
     }
-    // monthly / yearly with once-only free trial per STORE (registry survives account delete/recreate)
+
+    // monthly / yearly with once-only free trial per STORE
     const key = storeKey(b.name, b.phone);
-    const trialUsed = b.billing.free_trial_used || db.trials.find(t => t.key === key);
-    const days = db.settings.trialDays;
+    const { rows: trialRows } = await pool.query('SELECT key FROM trials WHERE key = $1', [key]);
+    const trialUsed = billing.free_trial_used || trialRows.length > 0;
+    const days = settings.trialDays || 30;
     if (!trialUsed && days > 0) {
       const start = now.toISOString();
       const end = new Date(now.getTime() + days * 86400000).toISOString();
-      b.billing.model = model === 'monthly' ? 'monthly' : 'yearly';
-      b.billing.status = 'trial';
-      b.billing.start = start;
-      b.billing.free_trial_used = true;
-      b.billing.free_trial_start = start;
-      b.billing.free_trial_end = end;
-      db.trials.push({ key, businessId: b.id, usedAt: start });
-      const sub = { id: nextId(), businessId: b.id, vendorId: me.id, model: b.billing.model, status: 'trial', start, end, amount: 0, createdAt: start };
-      db.subscriptions.push(sub);
-      return json(res, 200, { billing: b.billing, trial: true });
+      billing.model = model; billing.status = 'trial'; billing.start = start;
+      billing.free_trial_used = true; billing.free_trial_start = start; billing.free_trial_end = end;
+      await pool.query('UPDATE businesses SET billing = $1 WHERE id = $2', [JSON.stringify(billing), b.id]);
+      await pool.query('INSERT INTO trials (key, business_id, used_at) VALUES ($1,$2,$3)', [key, b.id, start]);
+      await pool.query(
+        `INSERT INTO subscriptions (business_id, vendor_id, model, status, start, "end", amount) VALUES ($1,$2,$3,'trial',$4,$5,0)`,
+        [b.id, me.id, model, start, end]
+      );
+      return json(res, 200, { billing, trial: true });
     }
-    const price = model === 'monthly' ? db.settings.monthlyPrice : db.settings.yearlyPrice;
+
+    const price = model === 'monthly' ? (settings.monthlyPrice || 50000) : (settings.yearlyPrice || 500000);
     const start = now.toISOString();
     const end = new Date(now.getTime() + (model === 'monthly' ? 30 : 365) * 86400000).toISOString();
-    b.billing.model = model;
-    b.billing.status = 'active';
-    b.billing.start = start;
-    b.billing.end = end;
-    const sub = { id: nextId(), businessId: b.id, vendorId: me.id, model, status: 'active', start, end, amount: price, createdAt: start };
-    db.subscriptions.push(sub);
-    addLedger({ vendorId: me.id, businessId: b.id, transaction_type: model === 'monthly' ? 'monthly_subscription' : 'yearly_subscription', amount: price, subscriptionId: sub.id });
-    return json(res, 200, { billing: b.billing, trial: false });
+    billing.model = model; billing.status = 'active'; billing.start = start; billing.end = end;
+    await pool.query('UPDATE businesses SET billing = $1 WHERE id = $2', [JSON.stringify(billing), b.id]);
+    const { rows: subRows } = await pool.query(
+      `INSERT INTO subscriptions (business_id, vendor_id, model, status, start, "end", amount) VALUES ($1,$2,$3,'active',$4,$5,$6) RETURNING id`,
+      [b.id, me.id, model, start, end, price]
+    );
+    await pool.query(
+      `INSERT INTO ledger (vendor_id, business_id, transaction_type, amount, currency, payment_method, status, reference, subscription_id)
+       VALUES ($1,$2,$3,$4,'SYP','platform','completed',$5,$6)`,
+      [me.id, b.id, model === 'monthly' ? 'monthly_subscription' : 'yearly_subscription', price, 'TX-' + Date.now(), subRows[0].id]
+    );
+    return json(res, 200, { billing, trial: false });
   }
 
-  // ---------- 8/10) admin: platform revenue ONLY (vendor -> platform) ----------
+  // ---- admin: revenue ----
   if (url === '/api/admin/revenue' && method === 'GET') {
-    const me = needRole(req, res, ['admin']);
+    const me = await needRole(req, res, ['admin']);
     if (!me) return;
-    return json(res, 200, revenueReport());
+    return json(res, 200, await revenueReport());
   }
+
+  // ---- admin: settings ----
   if (url === '/api/admin/settings' && (method === 'GET' || method === 'PATCH')) {
-    const me = needRole(req, res, ['admin']);
+    const me = await needRole(req, res, ['admin']);
     if (!me) return;
-    if (method === 'GET') return json(res, 200, db.settings);
-    const s = db.settings;
+    const { rows } = await pool.query('SELECT value FROM settings WHERE key = $1', ['platform']);
+    let s = rows[0]?.value || {};
+    if (method === 'GET') return json(res, 200, s);
     if (body.perOpPrice !== undefined && Number(body.perOpPrice) >= 0) s.perOpPrice = Math.floor(Number(body.perOpPrice));
     if (body.monthlyPrice !== undefined && Number(body.monthlyPrice) >= 0) s.monthlyPrice = Math.floor(Number(body.monthlyPrice));
     if (body.yearlyPrice !== undefined && Number(body.yearlyPrice) >= 0) s.yearlyPrice = Math.floor(Number(body.yearlyPrice));
@@ -280,191 +325,206 @@ module.exports = async (req, res) => {
     if (body.models && typeof body.models === 'object') {
       ['perOp', 'monthly', 'yearly'].forEach(k => { if (typeof body.models[k] === 'boolean') s.models[k] = body.models[k]; });
     }
+    await pool.query('UPDATE settings SET value = $1 WHERE key = $2', [JSON.stringify(s), 'platform']);
     return json(res, 200, s);
   }
+
+  // ---- admin: ledger ----
   if (url === '/api/admin/ledger' && method === 'GET') {
-    const me = needRole(req, res, ['admin']);
+    const me = await needRole(req, res, ['admin']);
     if (!me) return;
-    return json(res, 200, db.ledger.slice().reverse());
-  }
-  if (url === '/api/admin/vendors' && method === 'GET') {
-    const me = needRole(req, res, ['admin']);
-    if (!me) return;
-    const vendors = db.users.filter(u => u.role === 'vendor').map(u => {
-      const stores = db.businesses.filter(b => String(b.ownerId) === String(u.id));
-      return { ...safeUser(u), stores: stores.map(s => ({ id: s.id, name: s.name, billing: s.billing || null })) };
-    });
-    return json(res, 200, vendors);
+    const { rows } = await pool.query('SELECT * FROM ledger ORDER BY created_at DESC');
+    return json(res, 200, rows);
   }
 
-  // ---------- orders: DIRECT customer <-> vendor. Admin is NEVER involved. ----------
+  // ---- admin: vendors ----
+  if (url === '/api/admin/vendors' && method === 'GET') {
+    const me = await needRole(req, res, ['admin']);
+    if (!me) return;
+    const { rows: vendors } = await pool.query(`SELECT id, full_name, phone, role, created_at FROM users WHERE role = 'vendor'`);
+    const result = [];
+    for (const u of vendors) {
+      const { rows: stores } = await pool.query('SELECT id, name, billing FROM businesses WHERE owner_id = $1', [u.id]);
+      result.push({ ...safeUser(u), stores });
+    }
+    return json(res, 200, result);
+  }
+
+  // ---- orders ----
   if (url === '/api/orders' && method === 'GET') {
-    const me = authUser(req);
-    let list = db.orders;
+    const me = await authUser(req);
     if (!me) return json(res, 200, []);
     if (me.role === 'admin') return json(res, 403, { error: 'admin is not a party to customer payments' });
+    let q, params;
     if (me.role === 'vendor') {
-      const mine = new Set(db.businesses.filter(b => ownsBusiness(me, b)).map(b => String(b.id)));
-      list = list.filter(o => mine.has(String(o.businessId)));
+      const { rows: ownBiz } = await pool.query('SELECT id FROM businesses WHERE owner_id = $1', [me.id]);
+      const ids = ownBiz.map(b => b.id);
+      if (!ids.length) return json(res, 200, []);
+      q = `SELECT o.*, b.name AS business_name, b.phone AS business_phone FROM orders o LEFT JOIN businesses b ON o.business_id = b.id WHERE o.business_id = ANY($1) ORDER BY o.created_at DESC`;
+      params = [ids];
     } else {
-      list = list.filter(o => (o.userId && String(o.userId) === String(me.id)) || (!o.userId && o.phone === me.phone));
+      q = `SELECT o.*, b.name AS business_name, b.phone AS business_phone FROM orders o LEFT JOIN businesses b ON o.business_id = b.id WHERE o.user_id = $1 OR (o.user_id IS NULL AND o.phone = $2) ORDER BY o.created_at DESC`;
+      params = [me.id, me.phone];
     }
-    return json(res, 200, list.map(o => {
-      const biz = db.businesses.find(x => String(x.id) === String(o.businessId)) || null;
-      return { ...o, businessName: biz ? biz.name : '', businessPhone: biz ? biz.phone : '' };
-    }).reverse());
+    const { rows } = await pool.query(q, params);
+    return json(res, 200, rows);
   }
+
   if (url === '/api/orders' && method === 'POST') {
     if (!body.businessId || !body.customerName || !body.phone)
       return json(res, 400, { error: 'businessId, customerName & phone required' });
-    const me = authUser(req);
-    const id = nextId();
-    const o = {
-      id, code: 'JZQ-' + (1000 + id), businessId: body.businessId,
-      customerName: body.customerName, userId: me ? me.id : null,
-      phone: String(body.phone), address: body.address || '', notes: body.notes || '',
-      // Amount integrity: client value is ONLY a customer-declared estimate.
-      // Final amount is set by the VENDOR (price authority) on confirm. Never in ledger.
-      method: body.method || 'cash', amount: Math.max(0, Math.floor(Number(body.amount)) || 0),
-      declaredAmount: Math.max(0, Math.floor(Number(body.amount)) || 0), confirmedAmount: null,
-      status: 'pending', createdAt: new Date().toISOString()
-    };
-    db.orders.push(o);
+    const me = await authUser(req);
+    const { rows: [o] } = await pool.query(
+      `INSERT INTO orders (code, business_id, customer_name, user_id, phone, address, notes, method, amount, declared_amount, status)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'pending') RETURNING *`,
+      ['JZQ-' + (1000 + Math.floor(Math.random() * 9000) + 1000), body.businessId, body.customerName,
+       me ? me.id : null, String(body.phone), body.address || '', body.notes || '',
+       body.method || 'cash', Math.max(0, Math.floor(Number(body.amount)) || 0), Math.max(0, Math.floor(Number(body.amount)) || 0)]
+    );
     return json(res, 201, o);
   }
+
   const oSt = url.match(/^\/api\/orders\/(.+)\/status$/);
   if (oSt && method === 'PATCH') {
-    const me = needAuth(req, res);
+    const me = await needAuth(req, res);
     if (!me) return;
-    const o = db.orders.find(x => String(x.id) === String(oSt[1]));
-    if (!o) return json(res, 404, { error: 'not found' });
-    const st = (body || {}).status;
-    const biz = db.businesses.find(x => String(x.id) === String(o.businessId));
-    const isVendor = biz && ownsBusiness(me, biz);
-    const isCustomer = (o.userId && String(o.userId) === String(me.id)) || (!o.userId && o.phone === me.phone);
+    const { rows } = await pool.query('SELECT * FROM orders WHERE id = $1', [oSt[1]]);
+    if (!rows.length) return json(res, 404, { error: 'not found' });
+    const o = rows[0];
+    const { rows: bizRows } = await pool.query('SELECT * FROM businesses WHERE id = $1', [o.business_id]);
+    const biz = bizRows[0];
+    const isVendor = biz && await ownsBusiness(me, biz);
+    const isCustomer = (o.user_id && String(o.user_id) === String(me.id)) || (!o.user_id && o.phone === me.phone);
     if (me.role === 'admin') return json(res, 403, { error: 'admin is not a party to customer payments' });
+    const st = body.status;
     if (isVendor && ['confirmed', 'paid', 'done', 'rejected'].includes(st)) {
-      o.status = st;
+      let q = 'UPDATE orders SET status = $1', params = [st], i = 2;
       if (st === 'confirmed') {
-        const ca = Math.floor(Number((body || {}).confirmedAmount));
-        o.confirmedAmount = (ca >= 0 && isFinite(ca)) ? ca : (o.declaredAmount || o.amount || 0);
+        const ca = Math.floor(Number(body.confirmedAmount));
+        q += `, confirmed_amount = $${i++}`;
+        params.push((ca >= 0 && isFinite(ca)) ? ca : (o.declared_amount || o.amount || 0));
       }
-      return json(res, 200, o);
+      q += ` WHERE id = $${i} RETURNING *`;
+      params.push(o.id);
+      const { rows: [updated] } = await pool.query(q, params);
+      return json(res, 200, updated);
     }
-    if (isCustomer && st === 'cancelled' && o.status === 'pending') { o.status = 'cancelled'; return json(res, 200, o); }
+    if (isCustomer && st === 'cancelled' && o.status === 'pending') {
+      const { rows: [updated] } = await pool.query('UPDATE orders SET status = $1 WHERE id = $2 RETURNING *', ['cancelled', o.id]);
+      return json(res, 200, updated);
+    }
     return json(res, 403, { error: 'forbidden' });
   }
 
-  // ---------- inquiries: scoped by ownership (vendor: own stores; customer: own; admin: all) ----------
+  // ---- inquiries ----
   if (url === '/api/inquiries' && method === 'GET') {
-    const me = authUser(req);
+    const me = await authUser(req);
     if (!me) return json(res, 403, { error: 'auth required' });
-    let list = db.inquiries;
+    let q, params;
     if (me.role === 'vendor') {
-      const mine = new Set(db.businesses.filter(b => ownsBusiness(me, b)).map(b => String(b.id)));
-      list = list.filter(q => mine.has(String(q.businessId)));
+      const { rows: ownBiz } = await pool.query('SELECT id FROM businesses WHERE owner_id = $1', [me.id]);
+      const ids = ownBiz.map(b => b.id);
+      if (!ids.length) return json(res, 200, []);
+      q = `SELECT i.*, b.name AS business_name FROM inquiries i LEFT JOIN businesses b ON i.business_id = b.id WHERE i.business_id = ANY($1) ORDER BY i.created_at DESC`;
+      params = [ids];
     } else if (me.role === 'customer') {
-      list = list.filter(q => (q.userId && String(q.userId) === String(me.id)) || (!q.userId && q.phone === me.phone));
+      q = `SELECT i.*, b.name AS business_name FROM inquiries i LEFT JOIN businesses b ON i.business_id = b.id WHERE i.user_id = $1 OR (i.user_id IS NULL AND i.phone = $2) ORDER BY i.created_at DESC`;
+      params = [me.id, me.phone];
+    } else {
+      q = `SELECT i.*, b.name AS business_name FROM inquiries i LEFT JOIN businesses b ON i.business_id = b.id ORDER BY i.created_at DESC`;
+      params = [];
     }
-    const items = list.map(q => {
-      const biz = db.businesses.find(x => String(x.id) === String(q.businessId)) || null;
-      return { ...q, businessName: biz ? biz.name : '' };
-    }).reverse();
-    return json(res, 200, items);
+    const { rows } = await pool.query(q, params);
+    return json(res, 200, rows);
   }
+
   if (url === '/api/inquiries' && method === 'POST') {
     if (!body.businessId || !body.name || !body.message) return json(res, 400, { error: 'businessId, name & message required' });
-    const me = authUser(req);
-    const q = { id: nextId(), businessId: body.businessId, name: body.name, phone: body.phone || '', userId: me ? me.id : null, message: body.message, createdAt: new Date().toISOString(), read: false };
-    db.inquiries.push(q);
+    const me = await authUser(req);
+    const { rows: [q] } = await pool.query(
+      `INSERT INTO inquiries (business_id, name, phone, user_id, message) VALUES ($1,$2,$3,$4,$5) RETURNING *`,
+      [body.businessId, body.name, body.phone || '', me ? me.id : null, body.message]
+    );
     return json(res, 201, q);
   }
+
   const qRead = url.match(/^\/api\/inquiries\/(.+)\/read$/);
   if (qRead && method === 'POST') {
-    const me = needAuth(req, res);
+    const me = await needAuth(req, res);
     if (!me) return;
-    const q = db.inquiries.find(x => String(x.id) === String(qRead[1]));
-    if (!q) return json(res, 404, { error: 'not found' });
-    const biz = db.businesses.find(x => String(x.id) === String(q.businessId));
-    const mine = me.role === 'admin' || (biz && ownsBusiness(me, biz)) || (q.userId && String(q.userId) === String(me.id));
+    const { rows } = await pool.query('SELECT * FROM inquiries WHERE id = $1', [qRead[1]]);
+    if (!rows.length) return json(res, 404, { error: 'not found' });
+    const q = rows[0];
+    const { rows: bizRows } = await pool.query('SELECT * FROM businesses WHERE id = $1', [q.business_id]);
+    const biz = bizRows[0];
+    const mine = me.role === 'admin' || (biz && await ownsBusiness(me, biz)) || (q.user_id && String(q.user_id) === String(me.id));
     if (!mine) return json(res, 403, { error: 'forbidden' });
-    q.read = true;
-    return json(res, 200, q);
+    const { rows: [updated] } = await pool.query('UPDATE inquiries SET read = true WHERE id = $1 RETURNING *', [q.id]);
+    return json(res, 200, updated);
   }
 
   json(res, 404, { error: 'Not found' });
 };
 
-// ---------- platform money helpers (server-side only) ----------
-function publicSettings() {
-  const s = db.settings;
-  return { currency: s.currency, perOpPrice: s.perOpPrice, monthlyPrice: s.monthlyPrice, yearlyPrice: s.yearlyPrice, trialDays: s.trialDays, models: { ...s.models } };
-}
-function freshBilling() {
-  return { model: null, status: 'none', start: null, end: null, free_trial_used: false, free_trial_start: null, free_trial_end: null, opsCount: 0, opsDue: 0 };
-}
-function addLedger(e) {
-  const t = {
-    id: nextId(),
-    vendor_id: e.vendorId,
-    business_id: e.businessId || null,
-    transaction_type: e.transaction_type, // per_download | monthly_subscription | yearly_subscription
-    amount: Math.floor(Number(e.amount)) || 0,
-    currency: db.settings.currency,
-    payment_method: e.payment_method || 'platform',
-    status: e.status || 'completed',
-    reference: e.reference || ('TX-' + Date.now()),
-    subscription_id: e.subscriptionId || null,
-    created_at: new Date().toISOString()
-  };
-  db.ledger.push(t);
-  return t;
-}
-// Billable vendor operation (listing / images). Runs synchronously = atomic.
-function chargeOp(vendorId, businessId, kind) {
-  const b = db.businesses.find(x => String(x.id) === String(businessId));
+// ---- platform money helpers ----
+async function chargeOp(vendorId, businessId, kind) {
+  const { rows } = await pool.query('SELECT * FROM businesses WHERE id = $1', [businessId]);
+  const b = rows[0];
   if (!b) return null;
-  b.billing = b.billing || freshBilling();
-  if (b.billing.model !== 'perOp') return null; // subscriptions cover ops
-  if (!db.settings.models.perOp) return null;
-  const amount = db.settings.perOpPrice; // server-priced, never client input
-  b.billing.opsCount += 1;
-  b.billing.opsDue += amount;
-  return addLedger({ vendorId, businessId, transaction_type: 'per_download', amount, reference: 'OP-' + kind + '-' + businessId + '-' + b.billing.opsCount });
+  let billing = b.billing || { model: null, status: 'none', opsCount: 0, opsDue: 0 };
+  if (billing.model !== 'perOp') return null;
+  const { rows: s } = await pool.query('SELECT value FROM settings WHERE key = $1', ['platform']);
+  const settings = s[0]?.value || {};
+  if (!settings.models?.perOp) return null;
+  const amount = settings.perOpPrice || 5000;
+  billing.opsCount += 1;
+  billing.opsDue += amount;
+  await pool.query('UPDATE businesses SET billing = $1 WHERE id = $2', [JSON.stringify(billing), businessId]);
+  await pool.query(
+    `INSERT INTO ledger (vendor_id, business_id, transaction_type, amount, currency, payment_method, status, reference)
+     VALUES ($1,$2,'per_download',$3,'SYP','platform','completed',$4)`,
+    [vendorId, businessId, amount, 'OP-' + kind + '-' + businessId + '-' + billing.opsCount]
+  );
+  return true;
 }
-function activeSub(b, now) {
-  if (!b || !b.billing) return false;
-  if (b.billing.model === 'perOp') return b.billing.status === 'active';
-  if (!b.billing.end) return false;
-  return new Date(b.billing.end).getTime() > now && ['active', 'trial'].includes(b.billing.status);
-}
-function revenueReport() {
+
+async function revenueReport() {
+  const { rows: s } = await pool.query('SELECT value FROM settings WHERE key = $1', ['platform']);
+  const settings = s[0]?.value || {};
   const now = Date.now();
-  const vendors = db.users.filter(u => u.role === 'vendor');
-  const stores = db.businesses.filter(b => b.ownerId);
-  const subs = db.subscriptions;
-  const sum = arr => arr.reduce((s, x) => s + (Number(x.amount) || 0), 0);
-  const inMonth = db.ledger.filter(t => (Date.now() - new Date(t.created_at).getTime()) < 30 * 86400000);
-  const trialStores = stores.filter(b => b.billing && b.billing.status === 'trial' && activeSub(b, now));
-  const expiring = subs
-    .filter(s => s.status !== 'trial' && s.end && (new Date(s.end).getTime() - now) < 7 * 86400000 && (new Date(s.end).getTime() > now))
-    .map(s => {
-      const b = db.businesses.find(x => String(x.id) === String(s.businessId));
-      return { id: s.id, business: b ? b.name : '', model: s.model, end: s.end };
-    });
+  const { rows: vendors } = await pool.query(`SELECT count(*)::int AS n FROM users WHERE role = 'vendor'`);
+  const { rows: allBiz } = await pool.query('SELECT * FROM businesses WHERE owner_id IS NOT NULL');
+  const { rows: subs } = await pool.query('SELECT * FROM subscriptions');
+  const { rows: ledgerAll } = await pool.query('SELECT * FROM ledger');
+  const { rows: ledgerMonth } = await pool.query('SELECT * FROM ledger WHERE created_at > now() - interval \'30 days\'');
+
+  const activeBiz = allBiz.filter(b => {
+    if (!b.billing) return false;
+    if (b.billing.model === 'perOp') return b.billing.status === 'active';
+    if (!b.billing.end) return false;
+    return new Date(b.billing.end).getTime() > now && ['active', 'trial'].includes(b.billing.status);
+  });
+  const trialStores = allBiz.filter(b => b.billing?.status === 'trial' && activeBiz.includes(b));
+  const sum = arr => arr.reduce((acc, x) => acc + (Number(x.amount) || 0), 0);
+
   return {
-    currency: db.settings.currency,
-    totalVendors: vendors.length,
-    activeStores: stores.filter(b => activeSub(b, now)).length,
+    currency: settings.currency || 'SYP',
+    totalVendors: vendors[0].n,
+    activeStores: activeBiz.length,
     trialStores: trialStores.length,
     monthlySubs: subs.filter(s => s.model === 'monthly' && s.status === 'active').length,
     yearlySubs: subs.filter(s => s.model === 'yearly' && s.status === 'active').length,
-    paidOps: db.ledger.filter(t => t.transaction_type === 'per_download').length,
-    totalRevenue: sum(db.ledger),
-    monthlyRevenue: sum(inMonth),
-    yearlyRevenue: sum(db.ledger),
-    perOpRevenue: sum(db.ledger.filter(t => t.transaction_type === 'per_download')),
-    expiringSoon: expiring,
-    ledgerCount: db.ledger.length
+    paidOps: ledgerAll.filter(t => t.transaction_type === 'per_download').length,
+    totalRevenue: sum(ledgerAll),
+    monthlyRevenue: sum(ledgerMonth),
+    yearlyRevenue: sum(ledgerAll),
+    perOpRevenue: sum(ledgerAll.filter(t => t.transaction_type === 'per_download')),
+    expiringSoon: subs
+      .filter(s => s.status !== 'trial' && s.end && (new Date(s.end).getTime() - now) < 7 * 86400000 && (new Date(s.end).getTime() > now))
+      .map(s => {
+        const biz = allBiz.find(b => String(b.id) === String(s.business_id));
+        return { id: s.id, business: biz?.name || '', model: s.model, end: s.end };
+      }),
+    ledgerCount: ledgerAll.length
   };
 }
