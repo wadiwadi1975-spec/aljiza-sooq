@@ -59,6 +59,8 @@ async function ensureSchema() {
       images JSONB DEFAULT '[]',
       featured BOOLEAN DEFAULT false,
       rating NUMERIC DEFAULT 5.0,
+      price_syp INTEGER DEFAULT 0,
+      price_usd NUMERIC DEFAULT 0,
       pay_setup JSONB DEFAULT '{"accepted":["cash"],"details":{},"link":""}',
       billing JSONB DEFAULT '{"model":null,"status":"none","start":null,"end":null,"free_trial_used":false,"free_trial_start":null,"free_trial_end":null,"opsCount":0,"opsDue":0}',
       created_at TIMESTAMPTZ DEFAULT now()
@@ -129,6 +131,9 @@ async function ensureSchema() {
       ar TEXT NOT NULL,
       en TEXT NOT NULL
     );
+
+    ALTER TABLE businesses ADD COLUMN IF NOT EXISTS price_syp INTEGER DEFAULT 0;
+    ALTER TABLE businesses ADD COLUMN IF NOT EXISTS price_usd NUMERIC DEFAULT 0;
   `);
 }
 

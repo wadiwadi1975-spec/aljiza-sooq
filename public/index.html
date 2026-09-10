@@ -321,6 +321,7 @@ function card(b){
     + '<div class="cbody"><h3>'+esc(loc(b,'name'))+'</h3>'
     + '<div class="meta">'+catName(b.category)+' • '+esc(loc(b,'address'))+'</div>'
     + '<div class="desc">'+esc(loc(b,'description'))+'</div>'
+    + ((b.price_syp||b.price_usd)?'<div style="font-size:12px;font-weight:700;color:var(--acc);margin-top:4px">'+(b.price_syp?Number(b.price_syp).toLocaleString()+' ل.س':'')+(b.price_usd?' / $'+Number(b.price_usd).toLocaleString():'')+'</div>':'')
     + '<div class="cfoot"><span class="rate">★ '+b.rating+'</span>'
     + '<button class="wa" onclick="event.stopPropagation();window.open(\''+waLink+'\',\'_blank\')">واتساب</button></div>'
     + '</div></div>';
@@ -355,6 +356,7 @@ function openProfile(id){
   document.getElementById('modal').innerHTML =
     '<h2>'+esc(loc(b,'name'))+'</h2><div class="sub">'+catIcon(b.category,24)+' '+catName(b.category)+' • ★ '+b.rating+' • '+esc(loc(b,'address'))+'</div>'
     + '<p style="font-size:13.5px;line-height:1.9;margin-bottom:14px">'+esc(loc(b,'description'))+'</p>'
+    + ((b.price_syp||b.price_usd)?'<div style="background:var(--card2);padding:10px 14px;border-radius:10px;margin-bottom:14px;display:flex;gap:16px;align-items:center;font-weight:700">'+(b.price_syp?'<span>💰 '+Number(b.price_syp).toLocaleString()+' ل.س</span>':'')+(b.price_usd?'<span>💵 $'+Number(b.price_usd).toLocaleString()+'</span>':'')+'</div>':'')
     + ((b.images&&b.images.length)?'<div style="display:flex;gap:8px;margin-bottom:14px;overflow-x:auto">'+b.images.map(function(im){return '<img src="'+im+'" style="width:110px;height:110px;object-fit:cover;border-radius:12px;border:1px solid var(--line)" />'}).join('')+'</div>':'')
     + ((b.paySetup&&(b.paySetup.link||(b.paySetup.details&&Object.keys(b.paySetup.details).length)))?'<div style="text-align:center;margin-bottom:14px"><div style="font-size:12px;font-weight:700;margin-bottom:6px">'+t('showqr')+'</div>'+qrImg(b.paySetup.link||JSON.stringify(b.paySetup.details))+'</div>':'')
     + '<div class="xrow"><a class="btn" style="text-align:center" href="tel:'+esc(b.phone)+'">'+t('call')+'<br>'+esc(b.phone)+'</a>'
@@ -469,6 +471,8 @@ function openBiz(){
     + '<div class="mrow"><div class="frow"><label>'+t('phone')+' *</label><input id="b-phone" placeholder="01xxxxxxxxx"></div>'
     + '<div class="frow"><label>'+t('addr')+'</label><input id="b-addr"></div></div>'
     + '<div class="frow"><label>'+t('desc')+'</label><textarea id="b-desc"></textarea></div>'
+    + '<div class="mrow"><div class="frow"><label>السعر (ل.س)</label><input id="b-priceSyp" type="number" min="0" placeholder="0"></div>'
+    + '<div class="frow"><label>Price (USD)</label><input id="b-priceUsd" type="number" min="0" step="0.01" placeholder="0"></div></div>'
     + '<div class="frow"><label>صور المنتجات (حتى 3)</label><input type="file" id="b-imgs" accept="image/*" multiple onchange="prevImgs(this)"><div id="b-prev" style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap"></div></div>'
     + '<div class="xrow"><button class="btn pri" onclick="saveBiz()">'+t('save')+'</button>'
     + '<button class="btn" onclick="closeOv()">'+t('cancel')+'</button></div>';
@@ -477,7 +481,9 @@ function openBiz(){
 async function saveBiz(){
   var d = {name:document.getElementById('b-name').value.trim(), category:document.getElementById('b-cat').value,
     phone:document.getElementById('b-phone').value.trim(), address:document.getElementById('b-addr').value.trim(),
-    description:document.getElementById('b-desc').value.trim()};
+    description:document.getElementById('b-desc').value.trim(),
+    price_syp: Number(document.getElementById('b-priceSyp').value) || 0,
+    price_usd: Number(document.getElementById('b-priceUsd').value) || 0};
   if(!d.name || !d.phone){ alert('!'); return; }
   d.images = await readImgs(document.getElementById('b-imgs'));
   if(d.images.length) d.image = d.images[0];
@@ -486,13 +492,26 @@ async function saveBiz(){
 }
 function readImgs(input){
   return new Promise(function(res){
-    var files = Array.prototype.slice.call(input.files||[]).filter(function(f){return f.size <= 700*1024;}).slice(0,3);
+    var files = Array.prototype.slice.call(input.files||[]).slice(0,3);
     if(!files.length) return res([]);
     var out = new Array(files.length), done = 0;
     files.forEach(function(f,i){
       var r = new FileReader();
       function fin(){ done++; if(done===files.length) res(out.filter(Boolean)); }
-      r.onload = function(){ out[i]=r.result; fin(); };
+      r.onload = function(){
+        var img = new Image();
+        img.onload = function(){
+          var c = document.createElement('canvas');
+          var maxW = 600, maxH = 600;
+          var w = img.width, h = img.height;
+          if(w > maxW || h > maxH){ var s = Math.min(maxW/w, maxH/h); w *= s; h *= s; }
+          c.width = w; c.height = h;
+          c.getContext('2d').drawImage(img, 0, 0, w, h);
+          out[i] = c.toDataURL('image/jpeg', 0.7);
+          fin();
+        };
+        img.src = r.result;
+      };
       r.onerror = fin;
       r.readAsDataURL(f);
     });
@@ -556,7 +575,8 @@ async function renderVendor(){
         + ((bl.start||bl.end)?'<div class="meta">'+t('start')+': '+(bl.start||'-').slice(0,10)+' • '+t('end')+': '+(bl.end||'-').slice(0,10)+'</div>':'')
         + '<div class="xrow"><button class="btn" onclick="openBilling('+b.id+')">'+t('billing')+'</button>'
         + '<button class="btn" onclick="openPaySetup('+b.id+')">'+t('paysetup')+'</button></div>'
-        + '<div class="xrow"><button class="btn pri" onclick="openStoreImages('+b.id+')">'+t('prodimages')+'</button></div>'
+        + '<div class="xrow"><button class="btn pri" onclick="openStoreImages('+b.id+')">'+t('prodimages')+'</button>'
+        + '<button class="btn" onclick="editStorePrice('+b.id+')">تعديل السعر</button></div>'
         + '</div></div>';
     }).join('') + '</div>';
 }
@@ -586,6 +606,23 @@ async function subscribe(id, model){
   var r = await api('POST','/api/billing/subscribe',{businessId:id, model:model});
   if(r && r.billing){ alert('✓'+(r.trial?' ('+t('trial')+')':'')); closeOv(); renderVendor(); }
   else alert((r&&r.error)||'!');
+}
+function editStorePrice(id){
+  var b = BIZ.find(function(x){return x.id===id;});
+  if(!b) return;
+  document.getElementById('modal').innerHTML =
+    '<h2>تعديل السعر</h2><div class="sub">'+esc(b.name)+'</div>'
+    + '<div class="mrow"><div class="frow"><label>السعر (ل.س)</label><input id="ep-syp" type="number" min="0" value="'+(b.price_syp||0)+'"></div>'
+    + '<div class="frow"><label>Price (USD)</label><input id="ep-usd" type="number" min="0" step="0.01" value="'+(b.price_usd||0)+'"></div></div>'
+    + '<div class="xrow"><button class="btn pri" onclick="saveStorePrice('+id+')">'+t('save')+'</button>'
+    + '<button class="btn" onclick="closeOv()">'+t('cancel')+'</button></div>';
+  document.getElementById('ov').className = 'overlay open';
+}
+async function saveStorePrice(id){
+  var syp = Number(document.getElementById('ep-syp').value)||0;
+  var usd = Number(document.getElementById('ep-usd').value)||0;
+  var r = await api('PATCH','/api/businesses/'+id,{price_syp:syp,price_usd:usd});
+  if(r && r.id){ alert('✓'); closeOv(); load(); renderVendor(); } else alert((r&&r.error)||'!');
 }
 async function openPaySetup(id){
   var cur = await api('GET','/api/businesses/'+id+'/pay');

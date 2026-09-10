@@ -170,11 +170,12 @@ module.exports = async (req, res) => {
     const me = await authUser(req);
     const ownerId = me && me.role === 'vendor' ? me.id : null;
     const { rows: [biz] } = await pool.query(
-      `INSERT INTO businesses (owner_id, name, name_en, category, phone, whatsapp, address, address_en, description, description_en, image, images)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING *`,
+      `INSERT INTO businesses (owner_id, name, name_en, category, phone, whatsapp, address, address_en, description, description_en, image, images, price_syp, price_usd)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) RETURNING *`,
       [ownerId, body.name, body.nameEn || '', body.category || 'other', body.phone, body.whatsapp || body.phone,
        body.address || '', body.addressEn || '', body.description || '', body.descriptionEn || '',
-       body.image || '', JSON.stringify(Array.isArray(body.images) ? body.images.slice(0, 3) : [])]
+       body.image || '', JSON.stringify(Array.isArray(body.images) ? body.images.slice(0, 3) : []),
+       Math.max(0, Math.floor(Number(body.price_syp)) || 0), Math.max(0, Number(body.price_usd) || 0)]
     );
     if (ownerId) await chargeOp(ownerId, biz.id, 'listing');
     return json(res, 201, biz);
@@ -186,6 +187,36 @@ module.exports = async (req, res) => {
     const { rows } = await pool.query('SELECT pay_setup FROM businesses WHERE id = $1', [bPayGet[1]]);
     if (!rows.length) return json(res, 404, { error: 'not found' });
     return json(res, 200, rows[0].pay_setup || { accepted: ['cash'], details: {}, link: '' });
+  }
+  // ---- business update (PATCH /api/businesses/:id) ----
+  const bPatch = url.match(/^\/api\/businesses\/(.+)$/);
+  if (bPatch && method === 'PATCH') {
+    const me = await needRole(req, res, ['vendor', 'admin']);
+    if (!me) return;
+    const { rows } = await pool.query('SELECT * FROM businesses WHERE id = $1', [bPatch[1]]);
+    if (!rows.length) return json(res, 404, { error: 'not found' });
+    const b = rows[0];
+    if (!b.owner_id && me.role === 'vendor') {
+      await pool.query('UPDATE businesses SET owner_id = $1 WHERE id = $2', [me.id, b.id]);
+      b.owner_id = me.id;
+    }
+    if (!await ownsBusiness(me, b)) return json(res, 403, { error: 'not your store' });
+    const updates = [], params = [];
+    let i = 1;
+    if (body.name !== undefined) { updates.push(`name = $${i++}`); params.push(body.name); }
+    if (body.description !== undefined) { updates.push(`description = $${i++}`); params.push(body.description); }
+    if (body.address !== undefined) { updates.push(`address = $${i++}`); params.push(body.address); }
+    if (body.phone !== undefined) { updates.push(`phone = $${i++}`); params.push(body.phone); }
+    if (body.whatsapp !== undefined) { updates.push(`whatsapp = $${i++}`); params.push(body.whatsapp); }
+    if (body.price_syp !== undefined) { updates.push(`price_syp = $${i++}`); params.push(Math.max(0, Math.floor(Number(body.price_syp)) || 0)); }
+    if (body.price_usd !== undefined) { updates.push(`price_usd = $${i++}`); params.push(Math.max(0, Number(body.price_usd) || 0)); }
+    if (body.category !== undefined) { updates.push(`category = $${i++}`); params.push(body.category); }
+    if (updates.length) {
+      params.push(b.id);
+      const { rows: [updated] } = await pool.query(`UPDATE businesses SET ${updates.join(', ')} WHERE id = $${i} RETURNING *`, params);
+      return json(res, 200, updated);
+    }
+    return json(res, 200, b);
   }
   if (bPayGet && method === 'PATCH') {
     const me = await needRole(req, res, ['vendor', 'admin']);
