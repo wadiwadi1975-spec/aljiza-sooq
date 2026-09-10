@@ -60,7 +60,12 @@ async function ownsBusiness(u, b) {
 }
 
 module.exports = async (req, res) => {
+  try {
   await getDb(); // ensure schema + seed
+  } catch (e) {
+    console.error('[sooq] DB init error:', e.message);
+    return json(res, 500, { error: 'db init failed', detail: e.message });
+  }
   cors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
 
