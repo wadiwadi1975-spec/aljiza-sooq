@@ -143,6 +143,17 @@
     <div class="sec-t"><h2 data-i="adminT">إيرادات المنصة والاشتراكات</h2><button class="btn" data-i="back" onclick="go('home')">→ عودة</button></div>
     <div id="adminrev"></div>
   </div>
+
+  <div id="v-auth" style="display:none">
+    <div style="max-width:440px;margin:30px auto">
+      <div style="text-align:center;margin-bottom:16px"><img src="/logo.jpg" alt="" style="width:96px;height:96px;border-radius:22px;object-fit:cover;border:2px solid var(--line)" /></div>
+      <div style="display:flex;gap:8px;margin-bottom:14px">
+        <button class="btn" id="tab-login" style="flex:1" onclick="goAuth('login')">دخول</button>
+        <button class="btn" id="tab-register" style="flex:1" onclick="goAuth('register')">حساب جديد</button>
+      </div>
+      <div class="inbox" id="authbox" style="padding:18px"></div>
+    </div>
+  </div>
 </div>
 
 <div class="foot">AL-JIZA SOOQ.COM © 2026 — <span data-i="foot">صلة الوصل بين الجمهور وأصحاب المصالح</span></div>
@@ -222,20 +233,6 @@ function renderAuth(){
   document.getElementById('nav-vendor').style.display = (ME && ME.role==='vendor') ? '' : 'none';
   document.getElementById('nav-admin').style.display = (ME && ME.role==='admin') ? '' : 'none';
 }
-function openAuth(mode){
-  document.getElementById('modal').innerHTML =
-    '<h2>'+(mode==='login'?t('dologin'):t('doregister'))+'</h2>'
-    + (mode==='register'
-      ? '<div class="frow"><label>'+t('fullname')+' *</label><input id="a-name"></div>'
-        + '<div class="frow"><label><input type="checkbox" id="a-vendor" style="width:auto"> '+t('iamvendor')+'</label></div>'
-      : '')
-    + '<div class="frow"><label>'+t('phone')+' *</label><input id="a-phone" dir="ltr"></div>'
-    + '<div class="frow"><label>'+t('password')+' *</label><input id="a-pass" type="password"></div>'
-    + '<div class="xrow"><button class="btn pri" onclick="doAuth(\''+mode+'\')">'+(mode==='login'?t('dologin'):t('doregister'))+'</button>'
-    + '<button class="btn" onclick="openAuth(\''+(mode==='login'?'register':'login')+'\')">'+(mode==='login'?t('noaccount'):t('haveaccount'))+'</button></div>'
-    + '<div class="xrow"><button class="btn" onclick="closeOv()">'+t('cancel')+'</button></div>';
-  document.getElementById('ov').className = 'overlay open';
-}
 async function doAuth(mode){
   var ph = document.getElementById('a-phone').value.trim(),
       pw = document.getElementById('a-pass').value;
@@ -255,7 +252,8 @@ async function doAuth(mode){
   if(!r.ok){ alert(d.error||'!'); return; }
   localStorage.setItem('sooq_token', d.accessToken);
   ME = d.user;
-  closeOv(); renderAuth(); render();
+  renderAuth(); render();
+  go(AUTH_BACK && AUTH_BACK!=='auth' ? AUTH_BACK : 'home');
 }
 function logout(goHome){
   localStorage.removeItem('sooq_token');
@@ -276,7 +274,7 @@ function setLang(l){
 }
 
 function go(v){
-  ['home','inbox','orders','vendor','profile','admin'].forEach(function(x){
+  ['home','inbox','orders','vendor','profile','admin','auth'].forEach(function(x){
     document.getElementById('v-'+x).style.display = v===x?'block':'none';
   });
   if(v==='inbox') renderInbox();
@@ -284,8 +282,36 @@ function go(v){
   if(v==='vendor') renderVendor();
   if(v==='profile') renderProfile();
   if(v==='admin') renderAdmin();
+  if(v==='auth') renderAuthView();
   window.scrollTo(0,0);
 }
+var AUTH_TAB = 'login', AUTH_BACK = 'home';
+function goAuth(mode){
+  AUTH_TAB = mode || 'login';
+  var vis = ['home','inbox','orders','vendor','profile','admin'].find(function(x){
+    var el = document.getElementById('v-'+x);
+    return el && el.style.display !== 'none';
+  });
+  if(vis && vis!=='auth') AUTH_BACK = vis;
+  go('auth');
+}
+function renderAuthView(){
+  var tl = document.getElementById('tab-login'), tr = document.getElementById('tab-register');
+  tl.textContent = t('login'); tr.textContent = t('register');
+  tl.className = 'btn' + (AUTH_TAB==='login' ? ' pri' : '');
+  tr.className = 'btn' + (AUTH_TAB==='register' ? ' pri' : '');
+  var box = document.getElementById('authbox');
+  box.innerHTML =
+    (AUTH_TAB==='register'
+      ? '<div class="frow"><label>'+t('fullname')+' *</label><input id="a-name"></div>'
+        + '<div class="frow"><label><input type="checkbox" id="a-vendor" style="width:auto"> '+t('iamvendor')+'</label></div>'
+      : '')
+    + '<div class="frow"><label>'+t('phone')+' *</label><input id="a-phone" dir="ltr"></div>'
+    + '<div class="frow"><label>'+t('password')+' *</label><input id="a-pass" type="password"></div>'
+    + '<div class="xrow"><button class="btn pri" onclick="doAuth(\''+AUTH_TAB+'\')">'+(AUTH_TAB==='login'?t('dologin'):t('doregister'))+'</button></div>'
+    + '<div class="xrow"><button class="btn" onclick="goAuth(\''+(AUTH_TAB==='login'?'register':'login')+'\')">'+(AUTH_TAB==='login'?t('noaccount'):t('haveaccount'))+'</button></div>';
+}
+function openAuth(mode){ goAuth(mode || 'login'); }
 
 function card(b){
   var wa = (b.whatsapp||'').replace(/\D/g,'');
@@ -408,7 +434,7 @@ async function sendOrder(id){
 }
 async function renderOrders(){
   var box = document.getElementById('orders');
-  if(!ME){ box.innerHTML = '<div class="empty">'+t('needlogin')+'</div>'; return; }
+  if(!ME){ box.innerHTML = '<div class="empty">'+t('needlogin')+'<br><br><button class="btn pri" onclick="goAuth(\'login\')">'+t('login')+'</button></div>'; return; }
   var items = [];
   try{ items = await api('GET','/api/orders'); }catch(e){}
   if(!items.length){ box.innerHTML = '<div class="empty">'+t('noorders')+'</div>'; return; }
@@ -483,7 +509,7 @@ function prevImgs(input){
 }
 async function renderInbox(){
   var box = document.getElementById('inbox');
-  if(!ME){ box.innerHTML = '<div class="empty">'+t('needlogin')+'</div>'; return; }
+  if(!ME){ box.innerHTML = '<div class="empty">'+t('needlogin')+'<br><br><button class="btn pri" onclick="goAuth(\'login\')">'+t('login')+'</button></div>'; return; }
   var items = [];
   try{ items = await api('GET','/api/inquiries'); }catch(e){}
   box.innerHTML = items.length ? items.map(function(q){
@@ -498,7 +524,7 @@ async function markRead(id){
 }
 function renderProfile(){
   var box = document.getElementById('profile');
-  if(!ME){ box.innerHTML = '<div class="empty">'+t('needlogin')+'</div>'; return; }
+  if(!ME){ box.innerHTML = '<div class="empty">'+t('needlogin')+'<br><br><button class="btn pri" onclick="goAuth(\'login\')">'+t('login')+'</button></div>'; return; }
   box.innerHTML = '<div class="frow"><label>'+t('fullname')+'</label><input id="p-name" value="'+esc(ME.fullName)+'"></div>'
     + '<div class="frow"><label>'+t('phone')+'</label><input id="p-phone" dir="ltr" value="'+esc(ME.phone)+'"></div>'
     + '<div class="frow"><label>'+t('model')+'</label><input value="'+ME.role+'" disabled></div>'
