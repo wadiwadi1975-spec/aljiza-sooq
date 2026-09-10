@@ -65,13 +65,56 @@ const db = {
     { id: 1, code: 'JZQ-1001', businessId: 1, customerName: 'زبون تجريبي', phone: '0955000000', address: 'دمشق - المزة', notes: 'وجبتان مشكل', method: 'cash', amount: 150000, status: 'pending', createdAt: new Date().toISOString() }
   ],
   payMethods: [
-    { id: 'cash', ar: '💵 كاش (نقدي)', en: '💵 Cash' },
-    { id: 'sham', ar: '💠 شام كاش', en: '💠 Sham Cash' },
-    { id: 'syriatel', ar: '📱 سيريتل كاش', en: '📱 Syriatel Cash' },
-    { id: 'mtn', ar: '📱 MTN كاش', en: '📱 MTN Cash' },
-    { id: 'bank', ar: '🏦 تحويل بنكي', en: '🏦 Bank Transfer' },
-    { id: 'hawala', ar: '💸 حوالة', en: '💸 Hawala' }
+    { id: 'cash', ar: 'كاش (نقدي)', en: 'Cash' },
+    { id: 'sham', ar: 'شام كاش', en: 'Sham Cash' },
+    { id: 'syriatel', ar: 'سيريتل كاش', en: 'Syriatel Cash' },
+    { id: 'mtn', ar: 'MTN كاش', en: 'MTN Cash' },
+    { id: 'bank', ar: 'تحويل بنكي', en: 'Bank Transfer' },
+    { id: 'hawala', ar: 'حوالة', en: 'Hawala' }
   ]
 };
+
+// ---------- demo seeds: vendors + customers + platform money + customer money ----------
+(function seedDemo() {
+  const now = Date.now();
+  const iso = ms => new Date(ms).toISOString();
+  function mkUser(fullName, phone, pass, role) {
+    const u = { id: 'u' + nextId(), fullName, phone, passHash: hashPw(pass), algo: 'bcrypt', role, createdAt: iso(now - 40 * 86400000) };
+    db.users.push(u);
+    return u;
+  }
+  const v1 = mkUser('تاجر دمشقي', '0911111111', 'vendor123', 'vendor');
+  const v2 = mkUser('تاجرة حلبية', '0922222222', 'vendor123', 'vendor');
+  const c1 = mkUser('زبون دمشقي', '0933333333', 'customer123', 'customer');
+  const c2 = mkUser('زبونة حمصية', '0944444444', 'customer123', 'customer');
+  const store = id => db.businesses.find(b => b.id === id);
+  // store 1: monthly active subscription (platform money)
+  const s1 = store(1);
+  s1.ownerId = v1.id;
+  s1.billing = { model: 'monthly', status: 'active', start: iso(now - 10 * 86400000), end: iso(now + 20 * 86400000), free_trial_used: true, free_trial_start: iso(now - 40 * 86400000), free_trial_end: iso(now - 10 * 86400000), opsCount: 0, opsDue: 0 };
+  db.trials.push({ key: storeKey(s1.name, s1.phone), businessId: 1, usedAt: iso(now - 40 * 86400000) });
+  const sub1 = { id: nextId(), businessId: 1, vendorId: v1.id, model: 'monthly', status: 'active', start: s1.billing.start, end: s1.billing.end, amount: db.settings.monthlyPrice, createdAt: s1.billing.start };
+  db.subscriptions.push(sub1);
+  db.ledger.push({ id: nextId(), vendor_id: v1.id, business_id: 1, transaction_type: 'monthly_subscription', amount: db.settings.monthlyPrice, currency: db.settings.currency, payment_method: 'platform', status: 'completed', reference: 'TX-SEED-M1', subscription_id: sub1.id, created_at: s1.billing.start });
+  // store 2: on free trial
+  const s2 = store(2);
+  s2.ownerId = v1.id;
+  s2.billing = { model: 'monthly', status: 'trial', start: iso(now - 5 * 86400000), end: null, free_trial_used: true, free_trial_start: iso(now - 5 * 86400000), free_trial_end: iso(now + 25 * 86400000), opsCount: 0, opsDue: 0 };
+  db.trials.push({ key: storeKey(s2.name, s2.phone), businessId: 2, usedAt: s2.billing.free_trial_start });
+  db.subscriptions.push({ id: nextId(), businessId: 2, vendorId: v1.id, model: 'monthly', status: 'trial', start: s2.billing.start, end: s2.billing.free_trial_end, amount: 0, createdAt: s2.billing.start });
+  // store 3: per-op with 2 billed operations (platform money)
+  const s3 = store(3);
+  s3.ownerId = v2.id;
+  s3.billing = { model: 'perOp', status: 'active', start: iso(now - 12 * 86400000), end: null, free_trial_used: false, free_trial_start: null, free_trial_end: null, opsCount: 2, opsDue: db.settings.perOpPrice * 2 };
+  for (let k = 0; k < 2; k++) {
+    db.ledger.push({ id: nextId(), vendor_id: v2.id, business_id: 3, transaction_type: 'per_download', amount: db.settings.perOpPrice, currency: db.settings.currency, payment_method: 'platform', status: 'completed', reference: 'TX-SEED-P' + (k + 1), subscription_id: null, created_at: iso(now - (12 - k * 3) * 86400000) });
+  }
+  // customer -> vendor orders (customer money, NEVER platform revenue)
+  db.orders.push(
+    { id: nextId(), code: 'JZQ-9001', businessId: 1, customerName: c1.fullName, userId: c1.id, phone: c1.phone, address: 'دمشق - المزة', notes: 'وجبتان مشكل', method: 'cash', amount: 150000, declaredAmount: 150000, confirmedAmount: 150000, status: 'paid', createdAt: iso(now - 2 * 86400000) },
+    { id: nextId(), code: 'JZQ-9002', businessId: 3, customerName: c2.fullName, userId: c2.id, phone: c2.phone, address: 'حلب - الفرقان', notes: 'صيانة مكيف', method: 'sham', amount: 75000, declaredAmount: 75000, confirmedAmount: 75000, status: 'confirmed', createdAt: iso(now - 86400000) },
+    { id: nextId(), code: 'JZQ-9003', businessId: 2, customerName: c1.fullName, userId: c1.id, phone: c1.phone, address: '', notes: 'توصيل دواء', method: 'syriatel', amount: 30000, declaredAmount: 30000, confirmedAmount: null, status: 'pending', createdAt: iso(now - 3600000) }
+  );
+})();
 
 module.exports = { db, nextId, genSalt, hashPw, checkPw, newToken, storeKey };

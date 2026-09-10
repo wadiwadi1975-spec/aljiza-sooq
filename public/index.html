@@ -87,10 +87,10 @@
 <div class="top"><div class="top-in">
   <a class="logo" href="#" onclick="go('home');return false"><img src="/logo.jpg" alt="AL-JIZA SOOQ" style="width:42px;height:42px;border-radius:12px;object-fit:cover" /><span>AL-JIZA SOOQ<small>سوق الجيزة</small></span></a>
   <span class="sp"></span>
-  <button class="btn" data-i="inbox" onclick="go('inbox')">📥 الوارد</button>
-  <button class="btn" data-i="orders" onclick="go('orders')">📦 الطلبات</button>
-  <button class="btn" id="nav-vendor" style="display:none" data-i="mystores" onclick="go('vendor')">🏪 متاجري</button>
-  <button class="btn" id="nav-admin" style="display:none" data-i="admin" onclick="go('admin')">🛡️ الإدارة</button>
+  <button class="btn" data-i="inbox" onclick="go('inbox')">الوارد</button>
+  <button class="btn" data-i="orders" onclick="go('orders')">الطلبات</button>
+  <button class="btn" id="nav-vendor" style="display:none" data-i="mystores" onclick="go('vendor')">متاجري</button>
+  <button class="btn" id="nav-admin" style="display:none" data-i="admin" onclick="go('admin')">الإدارة</button>
   <span id="auth-area"></span>
   <button class="btn pri" data-i="add" onclick="openBiz()">+ أضف مصلحتك</button>
   <span class="lang"><button id="b-ar" class="on" onclick="setLang('ar')">AR</button><button id="b-en" onclick="setLang('en')">EN</button></span>
@@ -113,34 +113,34 @@
       <div class="feat2"><img src="/icons/feat-pay.png" alt="" style="width:72px;height:72px;object-fit:cover;border-radius:12px" /><b data-i="f4t">دفع آمن</b><small data-i="f4s">بطرق متعددة</small></div>
     </div>
     <div class="cats" id="cats"></div>
-    <div class="sec-t"><h2 data-i="feat">⭐ مصالح مميزة</h2><small data-i="n1" id="n1"></small></div>
+    <div class="sec-t"><h2 data-i="feat">مصالح مميزة</h2><small data-i="n1" id="n1"></small></div>
     <div class="grid" id="g-feat"></div>
-    <div class="sec-t"><h2 data-i="all">🏪 كل المصالح</h2><small data-i="n2" id="n2"></small></div>
+    <div class="sec-t"><h2 data-i="all">كل المصالح</h2><small data-i="n2" id="n2"></small></div>
     <div class="grid" id="g-all"></div>
   </div>
 
   <div id="v-inbox" style="display:none">
-    <div class="sec-t"><h2 data-i="inboxT">📥 رسائل الجمهور</h2><button class="btn" data-i="back" onclick="go('home')">→ عودة</button></div>
+    <div class="sec-t"><h2 data-i="inboxT">رسائل الجمهور</h2><button class="btn" data-i="back" onclick="go('home')">→ عودة</button></div>
     <div class="inbox" id="inbox"></div>
   </div>
 
   <div id="v-orders" style="display:none">
-    <div class="sec-t"><h2 data-i="ordersT">📦 طلبات الدفع</h2><button class="btn" data-i="back" onclick="go('home')">→ عودة</button></div>
+    <div class="sec-t"><h2 data-i="ordersT">طلبات الدفع</h2><button class="btn" data-i="back" onclick="go('home')">→ عودة</button></div>
     <div class="inbox" id="orders"></div>
   </div>
 
   <div id="v-vendor" style="display:none">
-    <div class="sec-t"><h2 data-i="mystoresT">🏪 متاجري وفوترتي</h2><button class="btn" data-i="back" onclick="go('home')">→ عودة</button></div>
+    <div class="sec-t"><h2 data-i="mystoresT">متاجري وفوترتي</h2><button class="btn" data-i="back" onclick="go('home')">→ عودة</button></div>
     <div id="vendor"></div>
   </div>
 
   <div id="v-profile" style="display:none">
-    <div class="sec-t"><h2 data-i="profileT">👤 حسابي</h2><button class="btn" data-i="back" onclick="go('home')">→ عودة</button></div>
+    <div class="sec-t"><h2 data-i="profileT">حسابي</h2><button class="btn" data-i="back" onclick="go('home')">→ عودة</button></div>
     <div class="inbox" id="profile" style="padding:16px"></div>
   </div>
 
   <div id="v-admin" style="display:none">
-    <div class="sec-t"><h2 data-i="adminT">🛡️ إيرادات المنصة والاشتراكات</h2><button class="btn" data-i="back" onclick="go('home')">→ عودة</button></div>
+    <div class="sec-t"><h2 data-i="adminT">إيرادات المنصة والاشتراكات</h2><button class="btn" data-i="back" onclick="go('home')">→ عودة</button></div>
     <div id="adminrev"></div>
   </div>
 </div>
@@ -153,7 +153,7 @@
 var LANG = localStorage.getItem('sooq_lang') || 'ar';
 var BIZ = [], CAT = 'all';
 var CATS = [
-  {id:'all', ar:'الكل', en:'All', ic:'🛍️'},
+  {id:'all', ar:'الكل', en:'All', ic:''},
   {id:'food', ar:'مطاعم وأكل', en:'Food', ic:'/icons/food.png'},
   {id:'health', ar:'صحة وصيدليات', en:'Health', ic:'/icons/health.png'},
   {id:'cars', ar:'سيارات وورش', en:'Cars', ic:'/icons/cars.png'},
@@ -180,14 +180,14 @@ var CATS = [
   {id:'other', ar:'????', en:'Other', ic:'/icons/other.png'}
 ];
 var T = {
-    ar: {h1:'سوق الجيزة — <span>صلة الوصل</span> بين الجمهور وأصحاب المصالح', hsub:'سوّق منتجك أو خدمتك مجاناً، ودع الزبائن يتواصلون معك مباشرة', ph:'ابحث عن مطعم، ورشة، صيدلية...', go:'بحث', feat:'⭐ مصالح مميزة', all:'🏪 كل المصالح', inbox:'📥 الوارد', add:'+ أضف مصلحتك', inboxT:'📥 رسائل الجمهور', back:'→ عودة', foot:'صلة الوصل بين الجمهور وأصحاب المصالح', contact:'تواصل', details:'التفاصيل', call:'📞 اتصال', wa:'واتساب', send:'✉️ أرسل رسالة', name:'الاسم', phone:'الهاتف', msg:'رسالتك', cancel:'إلغاء', save:'حفظ المصلحة', bname:'اسم المصلحة', cat:'التصنيف', addr:'العنوان', desc:'وصف النشاط', sent:'تم إرسال رسالتك بنجاح ✅', added:'تمت إضافة مصلحتك بنجاح ✅', nores:'لا توجد نتائج مطابقة', noinbox:'لا توجد رسائل بعد', view:'عرض', to:'إلى', f1t:'للمتاجر', f1s:'اعرض منتجاتك', f2t:'استعلام', f2s:'ابحث بسهولة', f3t:'تسوق', f3s:'ادفع بأمان', f4t:'دفع آمن', f4s:'بطرق متعددة', orders:'📦 الطلبات', ordersT:'📦 طلبات الدفع', orderNow:'🛒 اطلب الآن', payM:'طريقة الدفع', amount:'المبلغ (ل.س)', addr2:'عنوان التوصيل', notes:'تفاصيل الطلب', orderBtn:'تأكيد الطلب', orderOk:'تم استلام طلبك ✅', orderCode:'رقم الطلب', noorders:'لا توجد طلبات بعد', st_pending:'بانتظار التأكيد', st_confirmed:'مؤكد', st_paid:'مدفوع', st_rejected:'مرفوض', st_done:'مكتمل', doConfirm:'تأكيد', doPaid:'تم الدفع', doDone:'إتمام', doReject:'رفض', login:'دخول', register:'حساب جديد', logout:'خروج', profile:'حسابي', mystores:'🏪 متاجري', admin:'🛡️ الإدارة', mystoresT:'🏪 متاجري وفوترتي', profileT:'👤 حسابي', adminT:'🛡️ إيرادات المنصة والاشتراكات', fullname:'الاسم الثلاثي', password:'كلمة المرور', iamvendor:'أنا تاجر (عندي مصلحة)', dologin:'تسجيل الدخول', doregister:'إنشاء الحساب', haveaccount:'عندي حساب؟ دخول', noaccount:'جديد؟ أنشئ حساباً', saveProfile:'حفظ التعديلات', needlogin:'سجّل الدخول أولاً', mybiz:'مصالحي', billing:'الفوترة', model:'نظام الدفع للمنصة', perOp:'الدفع لكل عملية', monthly:'اشتراك شهري', yearly:'اشتراك سنوي', trial:'فترة مجانية', active:'نشط', none:'غير مشترك', opsdue:'رسوم مستحقة', opscount:'عدد العمليات', subscribe:'اشترك الآن', start:'البداية', end:'النهاية', usedtrial:'استُخدمت الفترة المجانية', paysetup:'وسائل الدفع المقبولة', paylink:'رابط الدفع (اختياري)', paydetails:'تفاصيل الدفع', savepay:'حفظ وسائل الدفع', showqr:'عرض QR', revTotal:'إجمالي الإيرادات', revVendors:'إجمالي التجار', revActive:'متاجر نشطة', revTrial:'في الفترة المجانية', revMonthly:'اشتراكات شهرية', revYearly:'اشتراكات سنوية', revOps:'عمليات مدفوعة', revMonth:'إيراد شهري', revYear:'إيراد سنوي', revPerOp:'إيراد العمليات', revExp:'تنتهي قريباً', revPrices:'أسعار المنصة', revLedger:'سجل الإيرادات', revVendorsL:'التجار', opPrice:'سعر العملية', monthPrice:'سعر الشهري', yearPrice:'سعر السنوي', trialDays:'أيام المجانية', enableMods:'تفعيل الأنظمة', saveSettings:'حفظ الإعدادات', st_cancelled:'ملغي', doCancel:'إلغاء الطلب', loginFirst:'هذه الميزة للتجار — سجّل حساب تاجر', declared:'معلن', confirmedBy:'مؤكد من التاجر'},
-  en: {h1:'Giza Market — the <span>bridge</span> between public & businesses', hsub:'Market your product or service for free, let customers reach you directly', ph:'Search restaurant, workshop, pharmacy...', go:'Search', feat:'⭐ Featured', all:'🏪 All businesses', inbox:'📥 Inbox', add:'+ Add business', inboxT:'📥 Public messages', back:'→ Back', foot:'The bridge between public & businesses', contact:'Contact', details:'Details', call:'📞 Call', wa:'WhatsApp', send:'✉️ Send message', name:'Name', phone:'Phone', msg:'Your message', cancel:'Cancel', save:'Save business', bname:'Business name', cat:'Category', addr:'Address', desc:'Description', sent:'Message sent ✅', added:'Business added ✅', nores:'No matching results', noinbox:'No messages yet', view:'View', to:'To', f1t:'For stores', f1s:'Showcase products', f2t:'Search', f2s:'Find easily', f3t:'Shop', f3s:'Pay safely', f4t:'Secure pay', f4s:'Many methods', orders:'?? Orders', ordersT:'?? Payment orders', orderNow:'?? Order now', payM:'Payment method', amount:'Amount (SYP)', addr2:'Delivery address', notes:'Order details', orderBtn:'Confirm order', orderOk:'Order received ?', orderCode:'Order no.', noorders:'No orders yet', st_pending:'Pending', st_confirmed:'Confirmed', st_paid:'Paid', st_rejected:'Rejected', st_done:'Done', doConfirm:'Confirm', doPaid:'Paid', doDone:'Complete', doReject:'Reject', login:'Login', register:'Sign up', logout:'Logout', profile:'My account', mystores:'?? My stores', admin:'??? Admin', mystoresT:'?? My stores & billing', profileT:'?? My account', adminT:'??? Platform revenue', fullname:'Full name', password:'Password', iamvendor:'I am a vendor', dologin:'Login', doregister:'Create account', haveaccount:'Have account? Login', noaccount:'New? Sign up', saveProfile:'Save', needlogin:'Login first', mybiz:'My businesses', billing:'Billing', model:'Platform billing model', perOp:'Pay per operation', monthly:'Monthly', yearly:'Yearly', trial:'Free trial', active:'Active', none:'Not subscribed', opsdue:'Due fees', opscount:'Operations', subscribe:'Subscribe', start:'Start', end:'End', usedtrial:'Trial used', paysetup:'Accepted payment methods', paylink:'Payment link (optional)', paydetails:'Payment details', savepay:'Save methods', showqr:'Show QR', revTotal:'Total revenue', revVendors:'Total vendors', revActive:'Active stores', revTrial:'On trial', revMonthly:'Monthly subs', revYearly:'Yearly subs', revOps:'Paid ops', revMonth:'Monthly revenue', revYear:'Yearly revenue', revPerOp:'Per-op revenue', revExp:'Expiring soon', revPrices:'Platform prices', revLedger:'Revenue ledger', revVendorsL:'Vendors', opPrice:'Per-op price', monthPrice:'Monthly price', yearPrice:'Yearly price', trialDays:'Trial days', enableMods:'Enabled models', saveSettings:'Save settings', st_cancelled:'Cancelled', doCancel:'Cancel order', loginFirst:'Vendors only - register a vendor account', declared:'declared', confirmedBy:'vendor-confirmed'}
+    ar: {h1:'سوق الجيزة — <span>صلة الوصل</span> بين الجمهور وأصحاب المصالح', hsub:'سوّق منتجك أو خدمتك مجاناً، ودع الزبائن يتواصلون معك مباشرة', ph:'ابحث عن مطعم، ورشة، صيدلية...', go:'بحث', feat:'مصالح مميزة', all:'كل المصالح', inbox:'الوارد', add:'+ أضف مصلحتك', inboxT:'رسائل الجمهور', back:'→ عودة', foot:'صلة الوصل بين الجمهور وأصحاب المصالح', contact:'تواصل', details:'التفاصيل', call:'اتصال', wa:'واتساب', send:'أرسل رسالة', name:'الاسم', phone:'الهاتف', msg:'رسالتك', cancel:'إلغاء', save:'حفظ المصلحة', bname:'اسم المصلحة', cat:'التصنيف', addr:'العنوان', desc:'وصف النشاط', sent:'تم إرسال رسالتك بنجاح', added:'تمت إضافة مصلحتك بنجاح', nores:'لا توجد نتائج مطابقة', noinbox:'لا توجد رسائل بعد', view:'عرض', to:'إلى', f1t:'للمتاجر', f1s:'اعرض منتجاتك', f2t:'استعلام', f2s:'ابحث بسهولة', f3t:'تسوق', f3s:'ادفع بأمان', f4t:'دفع آمن', f4s:'بطرق متعددة', orders:'الطلبات', ordersT:'طلبات الدفع', orderNow:'اطلب الآن', payM:'طريقة الدفع', amount:'المبلغ (ل.س)', addr2:'عنوان التوصيل', notes:'تفاصيل الطلب', orderBtn:'تأكيد الطلب', orderOk:'تم استلام طلبك', orderCode:'رقم الطلب', noorders:'لا توجد طلبات بعد', st_pending:'بانتظار التأكيد', st_confirmed:'مؤكد', st_paid:'مدفوع', st_rejected:'مرفوض', st_done:'مكتمل', doConfirm:'تأكيد', doPaid:'تم الدفع', doDone:'إتمام', doReject:'رفض', login:'دخول', register:'حساب جديد', logout:'خروج', profile:'حسابي', mystores:'متاجري', admin:'الإدارة', mystoresT:'متاجري وفوترتي', profileT:'حسابي', adminT:'إيرادات المنصة والاشتراكات', fullname:'الاسم الثلاثي', password:'كلمة المرور', iamvendor:'أنا تاجر (عندي مصلحة)', dologin:'تسجيل الدخول', doregister:'إنشاء الحساب', haveaccount:'عندي حساب؟ دخول', noaccount:'جديد؟ أنشئ حساباً', saveProfile:'حفظ التعديلات', needlogin:'سجّل الدخول أولاً', mybiz:'مصالحي', billing:'الفوترة', model:'نظام الدفع للمنصة', perOp:'الدفع لكل عملية', monthly:'اشتراك شهري', yearly:'اشتراك سنوي', trial:'فترة مجانية', active:'نشط', none:'غير مشترك', opsdue:'رسوم مستحقة', opscount:'عدد العمليات', subscribe:'اشترك الآن', start:'البداية', end:'النهاية', usedtrial:'استُخدمت الفترة المجانية', paysetup:'وسائل الدفع المقبولة', paylink:'رابط الدفع (اختياري)', paydetails:'تفاصيل الدفع', savepay:'حفظ وسائل الدفع', showqr:'عرض QR', revTotal:'إجمالي الإيرادات', revVendors:'إجمالي التجار', revActive:'متاجر نشطة', revTrial:'في الفترة المجانية', revMonthly:'اشتراكات شهرية', revYearly:'اشتراكات سنوية', revOps:'عمليات مدفوعة', revMonth:'إيراد شهري', revYear:'إيراد سنوي', revPerOp:'إيراد العمليات', revExp:'تنتهي قريباً', revPrices:'أسعار المنصة', revLedger:'سجل الإيرادات', revVendorsL:'التجار', opPrice:'سعر العملية', monthPrice:'سعر الشهري', yearPrice:'سعر السنوي', trialDays:'أيام المجانية', enableMods:'تفعيل الأنظمة', saveSettings:'حفظ الإعدادات', st_cancelled:'ملغي', doCancel:'إلغاء الطلب', loginFirst:'هذه الميزة للتجار — سجّل حساب تاجر', declared:'معلن', confirmedBy:'مؤكد من التاجر'},
+  en: {h1:'Giza Market — the <span>bridge</span> between public & businesses', hsub:'Market your product or service for free, let customers reach you directly', ph:'Search restaurant, workshop, pharmacy...', go:'Search', feat:'Featured', all:'All businesses', inbox:'Inbox', add:'+ Add business', inboxT:'Public messages', back:'→ Back', foot:'The bridge between public & businesses', contact:'Contact', details:'Details', call:'Call', wa:'WhatsApp', send:'Send message', name:'Name', phone:'Phone', msg:'Your message', cancel:'Cancel', save:'Save business', bname:'Business name', cat:'Category', addr:'Address', desc:'Description', sent:'Message sent', added:'Business added', nores:'No matching results', noinbox:'No messages yet', view:'View', to:'To', f1t:'For stores', f1s:'Showcase products', f2t:'Search', f2s:'Find easily', f3t:'Shop', f3s:'Pay safely', f4t:'Secure pay', f4s:'Many methods', orders:'Orders', ordersT:'Payment orders', orderNow:'Order now', payM:'Payment method', amount:'Amount (SYP)', addr2:'Delivery address', notes:'Order details', orderBtn:'Confirm order', orderOk:'Order received', orderCode:'Order no.', noorders:'Orders', st_pending:'Pending', st_confirmed:'Confirmed', st_paid:'Paid', st_rejected:'Rejected', st_done:'Done', doConfirm:'Confirm', doPaid:'Paid', doDone:'Complete', doReject:'Reject', login:'Login', register:'Sign up', logout:'Logout', profile:'My account', mystores:'My stores', admin:'Admin', mystoresT:'My stores & billing', profileT:'My account', adminT:'Platform revenue', fullname:'Full name', password:'Password', iamvendor:'I am a vendor', dologin:'Login', doregister:'Create account', haveaccount:'Have account? Login', noaccount:'New? Sign up', saveProfile:'Save', needlogin:'Login first', mybiz:'My businesses', billing:'Billing', model:'Platform billing model', perOp:'Pay per operation', monthly:'Monthly', yearly:'Yearly', trial:'Free trial', active:'Active', none:'Not subscribed', opsdue:'Due fees', opscount:'Operations', subscribe:'Subscribe', start:'Start', end:'End', usedtrial:'Trial used', paysetup:'Accepted payment methods', paylink:'Payment link (optional)', paydetails:'Payment details', savepay:'Save methods', showqr:'Show QR', revTotal:'Total revenue', revVendors:'Total vendors', revActive:'Active stores', revTrial:'On trial', revMonthly:'Monthly subs', revYearly:'Yearly subs', revOps:'Paid ops', revMonth:'Monthly revenue', revYear:'Yearly revenue', revPerOp:'Per-op revenue', revExp:'Expiring soon', revPrices:'Platform prices', revLedger:'Revenue ledger', revVendorsL:'Vendors', opPrice:'Per-op price', monthPrice:'Monthly price', yearPrice:'Yearly price', trialDays:'Trial days', enableMods:'Enabled models', saveSettings:'Save settings', st_cancelled:'Cancelled', doCancel:'Cancel order', loginFirst:'Vendors only - register a vendor account', declared:'declared', confirmedBy:'vendor-confirmed'}
 };
 function t(k){ return T[LANG][k] || k; }
 function loc(b, f){ return (LANG==='en' && b[f+'En']) ? b[f+'En'] : b[f]; }
 function catName(id){ var c = CATS.find(x=>x.id===id); return c ? (LANG==='ar'?c.ar:c.en) : id; }
 function catIcon(id, sz){
-  var c = CATS.find(x=>x.id===id); var v = c ? c.ic : '📦'; sz = sz||44;
+  var c = CATS.find(x=>x.id===id); var v = c ? c.ic : ''; sz = sz||44;
   if(v.charAt(0)==='/') return '<img src="'+v+'" alt="" style="width:'+sz+'px;height:'+sz+'px;object-fit:cover;border-radius:8px;vertical-align:middle" />';
   return '<span style="font-size:'+sz+'px">'+v+'</span>';
 }
@@ -217,7 +217,7 @@ function renderAuth(){
   var box = document.getElementById('auth-area');
   if(!ME){ box.innerHTML = '<button class="btn" onclick="openAuth(\'login\')">'+t('login')+'</button> <button class="btn pri" onclick="openAuth(\'register\')">'+t('register')+'</button>'; }
   else {
-    box.innerHTML = '<button class="btn" onclick="go(\'profile\')">👤 '+esc(ME.fullName.split(' ')[0])+'</button> <button class="btn" onclick="logout(true)">'+t('logout')+'</button>';
+    box.innerHTML = '<button class="btn" onclick="go(\'profile\')">'+esc(ME.fullName.split(' ')[0])+'</button> <button class="btn" onclick="logout(true)">'+t('logout')+'</button>';
   }
   document.getElementById('nav-vendor').style.display = (ME && ME.role==='vendor') ? '' : 'none';
   document.getElementById('nav-admin').style.display = (ME && ME.role==='admin') ? '' : 'none';
@@ -291,7 +291,7 @@ function card(b){
   var wa = (b.whatsapp||'').replace(/\D/g,'');
   var waLink = wa ? 'https://wa.me/2'+wa : '#';
   return '<div class="card" onclick="openProfile('+b.id+')">'
-    + '<div class="thumb">'+(b.image?'<img src="'+b.image+'" alt="" style="width:100%;height:100%;object-fit:cover" />':catIcon(b.category,76))+(b.featured?'<span class="feat">⭐</span>':'')+'</div>'
+    + '<div class="thumb">'+(b.image?'<img src="'+b.image+'" alt="" style="width:100%;height:100%;object-fit:cover" />':catIcon(b.category,76))+(b.featured?'<span class="feat">★</span>':'')+'</div>'
     + '<div class="cbody"><h3>'+esc(loc(b,'name'))+'</h3>'
     + '<div class="meta">'+catName(b.category)+' • '+esc(loc(b,'address'))+'</div>'
     + '<div class="desc">'+esc(loc(b,'description'))+'</div>'
@@ -359,7 +359,7 @@ async function sendMsg(id){
 var PAYM = [];
 async function getPayM(){
   if(PAYM.length) return PAYM;
-  try{ PAYM = await api('GET','/api/pay-methods'); }catch(e){ PAYM = [{id:'cash',ar:'💵 كاش (نقدي)',en:'💵 Cash'}]; }
+  try{ PAYM = await api('GET','/api/pay-methods'); }catch(e){ PAYM = [{id:'cash',ar:'كاش (نقدي)',en:'Cash'}]; }
   return PAYM;
 }
 function payLabel(id){ var m = PAYM.find(x=>x.id===id); return m ? (LANG==='ar'?m.ar:m.en) : id; }
@@ -413,7 +413,7 @@ async function renderOrders(){
   try{ items = await api('GET','/api/orders'); }catch(e){}
   if(!items.length){ box.innerHTML = '<div class="empty">'+t('noorders')+'</div>'; return; }
   box.innerHTML = items.map(function(o){
-    var st = {pending:['⏳',t('st_pending')],confirmed:['✔️',t('st_confirmed')],paid:['💰',t('st_paid')],rejected:['✖️',t('st_rejected')],done:['✅',t('st_done')],cancelled:['🚫',t('st_cancelled')]}[o.status] || [o.status,o.status];
+    var st = {pending:['•',t('st_pending')],confirmed:['✓',t('st_confirmed')],paid:['✓',t('st_paid')],rejected:['✗',t('st_rejected')],done:['✓',t('st_done')],cancelled:['✗',t('st_cancelled')]}[o.status] || [o.status,o.status];
     var btns = '';
     if(ME.role==='vendor'){
       if(o.status==='pending') btns = '<button class="btn" onclick="setOrder('+o.id+',\'confirmed\')">'+t('doConfirm')+'</button><button class="btn" onclick="setOrder('+o.id+',\'rejected\')">'+t('doReject')+'</button>';
@@ -443,7 +443,7 @@ function openBiz(){
     + '<div class="mrow"><div class="frow"><label>'+t('phone')+' *</label><input id="b-phone" placeholder="01xxxxxxxxx"></div>'
     + '<div class="frow"><label>'+t('addr')+'</label><input id="b-addr"></div></div>'
     + '<div class="frow"><label>'+t('desc')+'</label><textarea id="b-desc"></textarea></div>'
-    + '<div class="frow"><label>📷 صور المنتجات (حتى 3)</label><input type="file" id="b-imgs" accept="image/*" multiple onchange="prevImgs(this)"><div id="b-prev" style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap"></div></div>'
+    + '<div class="frow"><label>صور المنتجات (حتى 3)</label><input type="file" id="b-imgs" accept="image/*" multiple onchange="prevImgs(this)"><div id="b-prev" style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap"></div></div>'
     + '<div class="xrow"><button class="btn pri" onclick="saveBiz()">'+t('save')+'</button>'
     + '<button class="btn" onclick="closeOv()">'+t('cancel')+'</button></div>';
   document.getElementById('ov').className = 'overlay open';
@@ -506,7 +506,7 @@ function renderProfile(){
 }
 async function saveProfile(){
   var d = await api('PATCH','/api/users/me',{fullName:document.getElementById('p-name').value.trim(), phone:document.getElementById('p-phone').value.trim()});
-  if(d && d.id){ ME = d; renderAuth(); alert('✅'); } else { alert((d&&d.error)||'!'); }
+  if(d && d.id){ ME = d; renderAuth(); alert('✓'); } else { alert((d&&d.error)||'!'); }
 }
 function billLabel(b){
   if(!b || !b.model) return t('none');
@@ -526,7 +526,7 @@ async function renderVendor(){
       return '<div class="card"><div class="cbody"><h3>'+esc(b.name)+'</h3>'
         + '<div class="meta">'+t('billing')+': '+billLabel(bl)+'</div>'
         + ((bl.model==='perOp')?'<div class="meta">'+t('opscount')+': '+(bl.opsCount||0)+' • '+t('opsdue')+': <b>'+(bl.opsDue||0)+' '+s.currency+'</b></div>':'')
-        + (bl.free_trial_used?'<div class="meta">✅ '+t('usedtrial')+'</div>':'')
+        + (bl.free_trial_used?'<div class="meta">✓ '+t('usedtrial')+'</div>':'')
         + ((bl.start||bl.end)?'<div class="meta">'+t('start')+': '+(bl.start||'-').slice(0,10)+' • '+t('end')+': '+(bl.end||'-').slice(0,10)+'</div>':'')
         + '<div class="xrow"><button class="btn" onclick="openBilling('+b.id+')">'+t('billing')+'</button>'
         + '<button class="btn" onclick="openPaySetup('+b.id+')">'+t('paysetup')+'</button></div>'
@@ -543,7 +543,7 @@ async function openModalBilling(id){
   function modBtn(m, price, per){
     var en = s.models[m];
     return '<button class="btn'+(b.billing&&b.billing.model===m?' pri':'')+'" '+(en?'':'disabled')+' onclick="subscribe('+id+',\''+m+'\')">'
-      + (m==='perOp'?t('perOp'):m==='monthly'?t('monthly'):t('yearly'))+' • '+price+' '+s.currency+(per||'')+(en?'':' ✖️')+'</button>';
+      + (m==='perOp'?t('perOp'):m==='monthly'?t('monthly'):t('yearly'))+' • '+price+' '+s.currency+(per||'')+(en?'':' ✗')+'</button>';
   }
   document.getElementById('modal').innerHTML =
     '<h2>'+t('billing')+'</h2><div class="sub">'+esc(b.name)+' — '+billLabel(b.billing)+'</div>'
@@ -557,7 +557,7 @@ async function openModalBilling(id){
 }
 async function subscribe(id, model){
   var r = await api('POST','/api/billing/subscribe',{businessId:id, model:model});
-  if(r && r.billing){ alert('✅'+(r.trial?' ('+t('trial')+')':'')); closeOv(); renderVendor(); }
+  if(r && r.billing){ alert('✓'+(r.trial?' ('+t('trial')+')':'')); closeOv(); renderVendor(); }
   else alert((r&&r.error)||'!');
 }
 async function openPaySetup(id){
@@ -581,7 +581,7 @@ async function savePaySetup(id){
   document.querySelectorAll('[data-pm]').forEach(function(c){ if(c.checked) acc.push(c.getAttribute('data-pm')); });
   document.querySelectorAll('[data-pd]').forEach(function(i){ if(i.value.trim()) det[i.getAttribute('data-pd')] = i.value.trim(); });
   var r = await api('PATCH','/api/businesses/'+id+'/pay',{accepted:acc, details:det, link:document.getElementById('p-link').value.trim()});
-  if(r && r.accepted){ alert('✅'); closeOv(); } else alert((r&&r.error)||'!');
+  if(r && r.accepted){ alert('✓'); closeOv(); } else alert((r&&r.error)||'!');
 }
 function qrImg(text){
   return '<img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data='+encodeURIComponent(text)+'" alt="QR" style="width:180px;height:180px;border-radius:12px;border:1px solid var(--line)" />';
@@ -649,7 +649,7 @@ async function saveSettings(){
     trialDays:Number(document.getElementById('s-trial').value),
     models:{perOp:document.getElementById('s-m-perop').checked, monthly:document.getElementById('s-m-monthly').checked, yearly:document.getElementById('s-m-yearly').checked}
   });
-  if(r && r.currency!==undefined){ alert('✅'); renderAdmin(); } else alert((r&&r.error)||'!');
+  if(r && r.currency!==undefined){ alert('✓'); renderAdmin(); } else alert((r&&r.error)||'!');
 }
 function closeOv(){ document.getElementById('ov').className = 'overlay'; }
 document.getElementById('ov').addEventListener('click', function(e){ if(e.target===this) closeOv(); });
